@@ -26,7 +26,7 @@ public record RecoveryTrust(String issuer,String realm,String population,Set<Str
         if (!"https".equals(uri.getScheme()) || uri.getHost()==null || uri.getUserInfo()!=null || uri.getQuery()!=null || uri.getFragment()!=null
                 || realm==null || realm.isBlank() || Set.of("master","sandbox-institutions").contains(realm)
                 || !uri.getRawPath().equals("/realms/"+realm) || !Set.of("HUMAN","STAFF").contains(population)
-                || audiences==null || audiences.size()!=2 || invalid(audiences) || clients==null || clients.isEmpty() || invalid(clients)
+                || audiences==null || !audiences.equals(Set.of("firefly-recovery-domain","firefly-recovery-core")) || invalid(audiences) || clients==null || clients.isEmpty() || invalid(clients)
                 || !"PERMANENT_AUTHENTICATION_UNLOCK".equals(purpose) || maxLifetimeSeconds<1 || maxLifetimeSeconds>300 || population.equals("STAFF") && maxLifetimeSeconds>180) {
             throw new IllegalArgumentException("Explicit isolated population and HTTPS restricted-recovery trust required");
         }

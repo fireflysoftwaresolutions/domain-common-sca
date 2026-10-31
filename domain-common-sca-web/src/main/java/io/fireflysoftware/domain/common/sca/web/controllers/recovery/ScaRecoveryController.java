@@ -40,7 +40,8 @@ import java.util.function.Function;
     @ApiResponse(responseCode="403",description="Recovery refused"),@ApiResponse(responseCode="503",description="Recovery unavailable")})
 public class ScaRecoveryController {
     private final ObjectProvider<RecoveryOrchestrator> services;
-    public ScaRecoveryController(ObjectProvider<RecoveryOrchestrator> services){this.services=services;}
+    private final ObjectProvider<RecoveryAuditPort> audits;
+    public ScaRecoveryController(ObjectProvider<RecoveryOrchestrator> services,ObjectProvider<RecoveryAuditPort> audits){this.services=services;this.audits=audits;}
     public record ChallengeRequest(UUID challengeId) { }
     public record CompletionRequest(UUID challengeId,UUID reservationId,String attestation) {
         @Override public String toString(){return "CompletionRequest[redacted]";}
@@ -77,6 +78,11 @@ public class ScaRecoveryController {
             .onErrorResume(error->{HttpStatus response=HttpStatus.SERVICE_UNAVAILABLE;
                 if(error instanceof RecoveryFailure failure)response=switch(failure.kind()){
                     case UNAUTHENTICATED->HttpStatus.UNAUTHORIZED;case REFUSED->HttpStatus.FORBIDDEN;case INVALID->HttpStatus.BAD_REQUEST;case UNAVAILABLE->HttpStatus.SERVICE_UNAVAILABLE;};
-                return Mono.just(ResponseEntity.status(response).build());});
+                HttpStatus selected=response;
+                return Mono.defer(()->{var audit=audits.getIfAvailable();
+                    if(audit==null || !audit.isQualified())return Mono.just(ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).<T>build());
+                    return Mono.defer(()->audit.record(new RecoveryAuditPort.Event(null,null,RecoveryAuditPort.Outcome.REFUSED)))
+                        .timeout(java.time.Duration.ofSeconds(5)).thenReturn(ResponseEntity.status(selected).<T>build());
+                }).onErrorReturn(ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build());});
     }
 }

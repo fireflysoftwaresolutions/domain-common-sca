@@ -32,14 +32,26 @@ class RecoveryBoundaryTest {
     @Test void disabledBoundaryDoesNotNeedIssuerDecoderNativeCapabilityOrOrchestrator() {
         var chain=new RecoverySecurityConfiguration().disabled(ServerHttpSecurity.http());
         var beans=new StaticListableBeanFactory();
-        var controller=new ScaRecoveryController(beans.getBeanProvider(RecoveryOrchestrator.class));
+        var controller=new ScaRecoveryController(beans.getBeanProvider(RecoveryOrchestrator.class),beans.getBeanProvider(RecoveryAuditPort.class));
         var client=WebTestClient.bindToController(controller).webFilter(new WebFilterChainProxy(chain)).build();
         for(String route:List.of("/api/v1/sca/recovery-operations","/api/v1/sca/operations","/actuator/health"))
             client.post().uri(route).exchange().expectStatus().isForbidden();
     }
     @Test void controllerWithoutEnabledServiceReturnsSafeUnavailable() {
         var beans=new StaticListableBeanFactory();
-        WebTestClient.bindToController(new ScaRecoveryController(beans.getBeanProvider(RecoveryOrchestrator.class))).build()
+        WebTestClient.bindToController(new ScaRecoveryController(beans.getBeanProvider(RecoveryOrchestrator.class),beans.getBeanProvider(RecoveryAuditPort.class))).build()
             .post().uri("/api/v1/sca/recovery-operations").exchange().expectStatus().isEqualTo(503).expectBody().isEmpty();
+    }
+    @Test void typedShapeRefusalWaitsForDurableBoundaryAudit() {
+        var service=org.mockito.Mockito.mock(RecoveryOrchestrator.class);
+        var operation=UUID.fromString("d89c7273-40cd-4827-baf9-e22862799859");
+        org.mockito.Mockito.when(service.reserve(operation,null)).thenReturn(Mono.error(new RecoveryFailure(RecoveryFailure.Kind.INVALID)));
+        var events=new java.util.ArrayList<RecoveryAuditPort.Event>();
+        RecoveryAuditPort audit=new RecoveryAuditPort(){public boolean isQualified(){return true;}public Mono<Void> record(Event event){events.add(event);return Mono.empty();}};
+        var beans=new StaticListableBeanFactory();beans.addBean("service",service);beans.addBean("audit",audit);
+        WebTestClient.bindToController(new ScaRecoveryController(beans.getBeanProvider(RecoveryOrchestrator.class),beans.getBeanProvider(RecoveryAuditPort.class))).build()
+            .post().uri("/api/v1/sca/recovery-operations/"+operation+"/verifications/reservations")
+            .contentType(org.springframework.http.MediaType.APPLICATION_JSON).bodyValue("{\"challengeId\":null}").exchange().expectStatus().isBadRequest();
+        assertThat(events).hasSize(1);assertThat(events.getFirst().actor()).isNull();assertThat(events.getFirst().outcome()).isEqualTo(RecoveryAuditPort.Outcome.REFUSED);
     }
 }

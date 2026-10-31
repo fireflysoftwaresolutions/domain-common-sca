@@ -69,7 +69,9 @@ class RecoveryAdmissionTest {
         for(var changes:List.of(Map.<String,Object>of("recovery_only",false), Map.<String,Object>of("client_id","other"),
             Map.<String,Object>of("principal_kind","STAFF"),Map.<String,Object>of("staff_actor_id",ACTOR),
             Map.<String,Object>of("aud",Set.of("firefly-recovery-domain","business-api")),
-            Map.<String,Object>of("exp",NOW),Map.<String,Object>of("nbf",NOW.plusSeconds(1)),Map.<String,Object>of("client_id","<absent>"))) {
+            Map.<String,Object>of("iss","https://untrusted.example"), Map.<String,Object>of("tenant_id","other-tenant"),
+            Map.<String,Object>of("roles",List.of("admin")),Map.<String,Object>of("recovery_ceremony_id","<absent>"),
+            Map.<String,Object>of("iat",123L),Map.<String,Object>of("exp",NOW),Map.<String,Object>of("nbf",NOW.plusSeconds(1)),Map.<String,Object>of("client_id","<absent>"))) {
             var guard=new RecoveryAdmission(()->Mono.just(actor(changes)),policy,nativePort(calls),audit(),trust(),Clock.fixed(NOW,ZoneOffset.UTC));
             StepVerifier.create(guard.admit(RecoveryAction.BEGIN,null)).expectError(RecoveryFailure.class).verify();
         }
@@ -93,5 +95,13 @@ class RecoveryAdmissionTest {
         StepVerifier.create(guard.admit(RecoveryAction.BEGIN,null)).expectError(RecoveryFailure.class).verify();
         assertThatThrownBy(()->new RecoveryAdmission(Mono::empty,policy,mock(NativeRecoveryPort.class),audit(),trust(),Clock.systemUTC()))
             .isInstanceOf(IllegalStateException.class);
+    }
+    @Test void policyIndeterminateObligationsAndEmptyDecisionDeny() {
+        for(var result:List.of(Mono.just(Decision.indeterminate("indeterminate")),Mono.just(Decision.permit(List.of(
+                org.fireflyframework.security.api.domain.Obligation.of("unsupported",Map.of())))),Mono.<Decision>empty())) {
+            var policy=mock(PolicyDecisionPort.class);when(policy.authorize(any(),anyString(),anyString(),anyMap())).thenReturn(result);
+            var guard=new RecoveryAdmission(()->Mono.just(actor(Map.of())),policy,nativePort(new AtomicInteger()),audit(),trust(),Clock.fixed(NOW,ZoneOffset.UTC));
+            StepVerifier.create(guard.admit(RecoveryAction.BEGIN,null)).expectError(RecoveryFailure.class).verify();
+        }
     }
 }
