@@ -39,7 +39,7 @@ public final class ScopedRecoveryBearer implements ExchangeFilterFunction {
             if(request.method()!=org.springframework.http.HttpMethod.POST || !origin.getScheme().equals(uri.getScheme()) || !origin.getHost().equals(uri.getHost()) || port(origin)!=port(uri)
                 || uri.getUserInfo()!=null || uri.getRawQuery()!=null || uri.getFragment()!=null
                 || !uri.getRawPath().matches("/api/v1/sca/recovery-operations(?:/[0-9a-fA-F-]{36}/(?:challenges|verifications/(?:reservations|complete)|authorizations(?:/verify)?|executions))?")
-                || request.headers().containsKey(HttpHeaders.AUTHORIZATION))return Mono.error(refused());
+                || request.headers().containsHeader(HttpHeaders.AUTHORIZATION))return Mono.error(refused());
             return ReactiveSecurityContextHolder.getContext().flatMap(context->Mono.justOrEmpty(context.getAuthentication()))
                 .filter(authentication->authentication!=null && authentication.isAuthenticated())
                 .map(authentication->authentication.getCredentials()).filter(AbstractOAuth2Token.class::isInstance).cast(AbstractOAuth2Token.class)

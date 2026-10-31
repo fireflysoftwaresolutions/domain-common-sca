@@ -38,7 +38,7 @@ class NativeRecoveryHttpTest {
         StepVerifier.create(new RecoveryAuditHttpPort(http).record(new RecoveryAuditPort.Event(null,null,RecoveryAuditPort.Outcome.REFUSED))).verifyComplete();
         assertThat(seen.get().url().getPath()).endsWith("/rpc/audit");
         assertThat(seen.get().headers().getFirst("Authorization")).startsWith("Basic ");
-        assertThat(seen.get().headers()).doesNotContainKey("X-Actor-Assertion");
+        assertThat(seen.get().headers().headerNames()).doesNotContain("X-Actor-Assertion");
     }
     @Test void noReceiptOrProviderErrorCannotSatisfyDurableAuditAndDoesNotExposeResponseBody() {
         for(String response:new String[]{"{}","{\"auditId\":null,\"committedAt\":null}"}) {

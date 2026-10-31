@@ -63,7 +63,7 @@ class GeneratedRecoverySdkTest {
                 assertThat(value.getExpiresAt()).isEqualTo(LocalDateTime.of(2026,10,31,20,1));}).verifyComplete();
         assertThat(seen.get().url().getPath()).isEqualTo("/api/v1/sca/recovery-operations");
         assertThat(seen.get().headers().getFirst("Authorization")).isEqualTo("Bearer synthetic-source-fixture");
-        assertThat(seen.get().headers()).doesNotContainKey("X-Idempotency-Key");
+        assertThat(seen.get().headers().headerNames()).doesNotContain("X-Idempotency-Key");
     }
     @Test void actualGeneratedReceiptVerificationRequestUsesRfc3339UtcForCoreInstant() throws Exception {
         var request=new VerifyRecoveryAuthorizationRequest().executionId(UUID.fromString("c10eceaa-f26b-4964-bd76-93c504250a8e"))
