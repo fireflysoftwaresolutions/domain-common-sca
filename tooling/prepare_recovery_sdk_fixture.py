@@ -81,6 +81,13 @@ def run(command, label):
         result = subprocess.run(command, cwd=ROOT, stdout=stream, stderr=subprocess.STDOUT)
     if result.returncode:
         # These are source-only synthetic tests. Print bounded build diagnostics, never provider/browser logs.
+        for report in ROOT.glob('domain-common-sca-*/target/surefire-reports/TEST-*.xml'):
+            suite = ET.parse(report).getroot()
+            for case in suite.findall('testcase'):
+                for error in case.findall('error') + case.findall('failure'):
+                    causes = [line.strip() for line in (error.text or '').splitlines() if 'Caused by:' in line]
+                    if causes:
+                        print('TEST_CAUSES ' + case.attrib.get('classname', '') + '.' + case.attrib.get('name', '') + ': ' + ' | '.join(causes[:5])[:1800])
         lines = log.read_text(errors='replace').splitlines()
         print('\n'.join(lines[-90:]))
         raise RuntimeError(f'{label} failed with status {result.returncode}')
