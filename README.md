@@ -28,6 +28,8 @@ Developed by the Firefly Software Foundation. [dev@fireflysoftware.io](mailto:de
 
 ## Overview
 
+The additive native account-recovery candidate is default-off and self-only. Its original-producer SDK and Domain source are [hosted-qualified](docs/SOURCE_QUALIFICATION.md); installed native unlocking and production acceptance remain separate gates. See [the exact recovery contract and configuration](docs/RECOVERY_SOURCE_CONTRACT.md).
+
 `domain-common-sca` is a reactive Spring Boot microservice that sits at the **domain layer** of the Firefly platform. Its responsibility is to provide a clean, business-oriented API for Strong Customer Authentication flows, shielding consumers from the lower-level complexity of the core SCA management system (`core-common-sca-mgmt`).
 
 The service handles the full SCA lifecycle: a caller initiates an operation (triggering automatic challenge generation and delivery), the user submits a verification code, and the service records the attempt, updates the operation status, and writes an immutable audit event — all as a single compensatable saga. It also exposes read-only endpoints to inspect operation state, individual attempts, and the complete status-change history.
