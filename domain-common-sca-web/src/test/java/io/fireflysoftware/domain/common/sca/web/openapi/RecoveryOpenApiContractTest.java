@@ -18,18 +18,18 @@
 package io.fireflysoftware.domain.common.sca.web.openapi;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 @SpringBootTest(classes=OpenApiGenApplication.class,webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT,
-    properties="spring.config.name=openapi-contract-fixture")
+    properties={"spring.config.name=openapi-contract-fixture","spring.main.web-application-type=reactive","server.address=127.0.0.1","springdoc.api-docs.enabled=true","springdoc.paths-to-match=/api/**"})
 @ActiveProfiles("openapi-gen")
 class RecoveryOpenApiContractTest {
-    @Autowired WebTestClient client;
+    @Value("${local.server.port}") int port;
     @Test void originalProducerExposesRestrictedBearerRecoveryWithoutCredentialFieldsOrCacheHeaders() {
-        client.get().uri("/v3/api-docs").exchange().expectStatus().isOk().expectBody()
+        WebTestClient.bindToServer().baseUrl("http://127.0.0.1:"+port).build().get().uri("/v3/api-docs").exchange().expectStatus().isOk().expectBody()
             .jsonPath("$.components.securitySchemes.bearerAuth.scheme").isEqualTo("bearer")
             .jsonPath("$.paths['/api/v1/sca/recovery-operations'].post.operationId").isEqualTo("beginRecovery")
             .jsonPath("$.paths['/api/v1/sca/recovery-operations'].post.responses['201'].content").isNotEmpty()
