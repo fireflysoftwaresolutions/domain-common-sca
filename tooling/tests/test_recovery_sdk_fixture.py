@@ -18,6 +18,9 @@ class CandidateIsolationTest(unittest.TestCase):
             root = ET.parse(path).getroot()
             self.assertEqual(root.find('m:parent/m:version', fixture.NS).text, '26.10.6')
             self.assertEqual(root.find('m:version', fixture.NS).text, '26.10.6-recovery-source-test-SNAPSHOT')
+            versions={d.find('m:artifactId',fixture.NS).text:d.find('m:version',fixture.NS).text
+                for d in root.findall('m:dependencyManagement/m:dependencies/m:dependency',fixture.NS)}
+            self.assertEqual(versions,{'core-common-sca-mgmt-'+module:'26.10.6' for module in ('interfaces','models','core','web')})
             with self.assertRaises(ValueError): fixture.candidate_sdk(path, 'another')
 
     def test_unexpected_parent_shape_fails_before_overwrite(self):

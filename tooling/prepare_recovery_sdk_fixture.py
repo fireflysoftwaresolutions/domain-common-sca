@@ -49,7 +49,15 @@ def candidate_sdk(pom, version):
     element = ET.Element(f"{{{NS['m']}}}version")
     element.text = version
     model.insert(list(model).index(model.find('m:artifactId', NS)) + 1, element)
-    # project.version is interpolated in inherited sibling management; preserve the real source web sibling.
+    # SDK project.version would also remap provided transitive siblings through inherited dependency management.
+    management = ET.SubElement(model, f"{{{NS['m']}}}dependencyManagement")
+    managed = ET.SubElement(management, f"{{{NS['m']}}}dependencies")
+    for module in ('interfaces', 'models', 'core', 'web'):
+        dependency = ET.SubElement(managed, f"{{{NS['m']}}}dependency")
+        for name, value in [('groupId', 'io.fireflysoftware'), ('artifactId', 'core-common-sca-mgmt-' + module), ('version', '26.10.6')]:
+            ET.SubElement(dependency, f"{{{NS['m']}}}{name}").text = value
+    # Retain the direct provided web sibling too.
+
     for dependency in model.findall('m:dependencies/m:dependency', NS):
         if dependency.find('m:artifactId', NS).text == 'core-common-sca-mgmt-web':
             ET.SubElement(dependency, f"{{{NS['m']}}}version").text = '26.10.6'
