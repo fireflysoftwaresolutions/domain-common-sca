@@ -150,7 +150,7 @@ def main():
         suite = ET.parse(report).getroot()
         if any(word in suite.attrib.get('name', '') for word in ('Recovery', 'GeneratedRecoverySdk', 'ScopedRecoveryBearer')):
             reports.append({key: suite.attrib.get(key, '0') for key in ('name', 'tests', 'failures', 'errors', 'skipped')})
-    required = {'RecoveryAdmissionTest', 'NativeSelfRecoveryPolicyTest', 'RecoveryOrchestratorTest', 'GeneratedRecoverySdkTest', 'ScopedRecoveryBearerTest', 'RecoveryBoundaryTest', 'RecoveryConfigurationTest', 'RecoveryOpenApiContractTest'}
+    required = {'RecoveryAdmissionTest', 'NativeSelfRecoveryPolicyTest', 'NativeRecoveryHttpTest', 'RecoveryOrchestratorTest', 'GeneratedRecoverySdkTest', 'ScopedRecoveryBearerTest', 'RecoveryBoundaryTest', 'RecoveryConfigurationTest', 'RecoveryOpenApiContractTest'}
     if not all(any(r['name'].endswith(name) for r in reports) for name in required) or any(int(r[k]) for r in reports for k in ('failures', 'errors', 'skipped')):
         raise RuntimeError('Required actual Domain/SDK reports missing, failed or skipped')
     summary.update(candidate_sdk_version=version, candidate_sdk_sha256=sha(jar), candidate_descriptor_sha256=sha(flat),

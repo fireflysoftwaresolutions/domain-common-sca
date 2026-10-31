@@ -26,6 +26,8 @@ import io.swagger.v3.oas.annotations.*;
 import io.swagger.v3.oas.annotations.security.*;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.responses.*;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import reactor.core.publisher.Mono;
 import java.time.Instant;
 import java.util.UUID;
@@ -49,25 +51,25 @@ public class ScaRecoveryController {
     public record AuthorizationRequest(UUID executionId,Instant expiresAt) { }
     public record ExecutionRequest(UUID executionId,Instant expiresAt,String outcome) { }
     public record Acknowledgement(UUID operationId,String status) { }
-    @PostMapping @DisableIdempotency @Operation(operationId="beginRecovery") @ApiResponse(responseCode="201",description="Bound recovery operation and challenge references")
+    @PostMapping @DisableIdempotency @Operation(operationId="beginRecovery") @ApiResponse(responseCode="201",description="Bound recovery operation and challenge references",content=@Content(schema=@Schema(implementation=RecoveryStart.class)))
     public Mono<ResponseEntity<RecoveryStart>> begin(){return respond(service->service.begin(),HttpStatus.CREATED);}
-    @PostMapping("/{operationId}/verifications/reservations") @DisableIdempotency @Operation(operationId="reserveRecoveryVerification") @ApiResponse(responseCode="201",description="Committed verification reservation")
+    @PostMapping("/{operationId}/verifications/reservations") @DisableIdempotency @Operation(operationId="reserveRecoveryVerification") @ApiResponse(responseCode="201",description="Committed verification reservation",content=@Content(schema=@Schema(implementation=RecoveryReservation.class)))
     public Mono<ResponseEntity<RecoveryReservation>> reserve(@PathVariable UUID operationId,@RequestBody ChallengeRequest request){
         return respond(service->service.reserve(operationId,request==null?null:request.challengeId()),HttpStatus.CREATED);
     }
-    @PostMapping("/{operationId}/verifications/complete") @DisableIdempotency @Operation(operationId="completeRecoveryVerification") @ApiResponse(responseCode="202",description="Generic acknowledgement only")
+    @PostMapping("/{operationId}/verifications/complete") @DisableIdempotency @Operation(operationId="completeRecoveryVerification") @ApiResponse(responseCode="202",description="Generic acknowledgement only",content=@Content(schema=@Schema(implementation=Acknowledgement.class)))
     public Mono<ResponseEntity<Acknowledgement>> complete(@PathVariable UUID operationId,@RequestBody CompletionRequest request){
         return respond(service->request==null?Mono.error(new RecoveryFailure(RecoveryFailure.Kind.INVALID)):
             service.complete(operationId,request.challengeId(),request.reservationId(),request.attestation()).thenReturn(new Acknowledgement(operationId,"ACKNOWLEDGED")),HttpStatus.ACCEPTED);
     }
-    @PostMapping("/{operationId}/authorizations") @DisableIdempotency @Operation(operationId="consumeRecoveryAuthorization") @ApiResponse(responseCode="200",description="Bound authorization reference; native execution is separate")
+    @PostMapping("/{operationId}/authorizations") @DisableIdempotency @Operation(operationId="consumeRecoveryAuthorization") @ApiResponse(responseCode="200",description="Bound authorization reference; native execution is separate",content=@Content(schema=@Schema(implementation=RecoveryAuthorization.class)))
     public Mono<ResponseEntity<RecoveryAuthorization>> consume(@PathVariable UUID operationId){return respond(service->service.consume(operationId),HttpStatus.OK);}
-    @PostMapping("/{operationId}/authorizations/verify") @DisableIdempotency @Operation(operationId="verifyRecoveryAuthorization") @ApiResponse(responseCode="200",description="Online verified canonical authorization")
+    @PostMapping("/{operationId}/authorizations/verify") @DisableIdempotency @Operation(operationId="verifyRecoveryAuthorization") @ApiResponse(responseCode="200",description="Online verified canonical authorization",content=@Content(schema=@Schema(implementation=RecoveryAuthorization.class)))
     public Mono<ResponseEntity<RecoveryAuthorization>> verify(@PathVariable UUID operationId,@RequestBody AuthorizationRequest request){
         return respond(service->request==null?Mono.error(new RecoveryFailure(RecoveryFailure.Kind.INVALID)):
             service.verify(operationId,request.executionId(),request.expiresAt()),HttpStatus.OK);
     }
-    @PostMapping("/{operationId}/executions") @DisableIdempotency @Operation(operationId="recordRecoveryExecution") @ApiResponse(responseCode="204",description="Authoritative native journal outcome reconciled")
+    @PostMapping("/{operationId}/executions") @DisableIdempotency @Operation(operationId="recordRecoveryExecution") @ApiResponse(responseCode="204",description="Authoritative native journal outcome reconciled",content=@Content)
     public Mono<ResponseEntity<Void>> record(@PathVariable UUID operationId,@RequestBody ExecutionRequest request){
         return respond(service->request==null?Mono.error(new RecoveryFailure(RecoveryFailure.Kind.INVALID)):
             service.record(operationId,new RecoveryAuthorization(operationId,request.executionId(),null,request.expiresAt()),request.outcome()),HttpStatus.NO_CONTENT);
