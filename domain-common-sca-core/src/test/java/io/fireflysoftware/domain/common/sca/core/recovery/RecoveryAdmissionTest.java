@@ -104,4 +104,12 @@ class RecoveryAdmissionTest {
             StepVerifier.create(guard.admit(RecoveryAction.BEGIN,null)).expectError(RecoveryFailure.class).verify();
         }
     }
+    @Test void expiryDuringPolicyEvaluationCannotReachDownstreamAdmission() {
+        var now=new java.util.concurrent.atomic.AtomicReference<>(NOW);
+        Clock clock=new Clock(){public ZoneId getZone(){return ZoneOffset.UTC;}public Clock withZone(ZoneId zone){return this;}public Instant instant(){return now.get();}};
+        var policy=mock(PolicyDecisionPort.class);
+        when(policy.authorize(any(),anyString(),anyString(),anyMap())).thenAnswer(call->{now.set(NOW.plusSeconds(121));return Mono.just(Decision.permit());});
+        var guard=new RecoveryAdmission(()->Mono.just(actor(Map.of())),policy,nativePort(new AtomicInteger()),audit(),trust(),clock);
+        StepVerifier.create(guard.admit(RecoveryAction.BEGIN,null)).expectError(RecoveryFailure.class).verify();
+    }
 }

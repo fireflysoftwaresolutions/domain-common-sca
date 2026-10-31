@@ -39,16 +39,16 @@ public final class RecoveryOrchestrator {
             .switchIfEmpty(Mono.error(RecoveryFailure.unavailable())).flatMap(operation->{
                 if(operation.getOperationId()==null || !instant(operation.getExpiresAt()).isAfter(clock.instant())) throw RecoveryFailure.unavailable();
                 UUID id=operation.getOperationId();
-                return issue(id,first.context(),RecoveryFactorCategory.KNOWLEDGE).flatMap(knowledge->
-                    issue(id,first.context(),RecoveryFactorCategory.POSSESSION).map(possession->new RecoveryStart(id,knowledge,possession)));
+                return issue(id,first.context(),"KNOWLEDGE").flatMap(knowledge->
+                    issue(id,first.context(),"POSSESSION").map(possession->new RecoveryStart(id,knowledge,possession)));
             }));
     }
-    private Mono<UUID> issue(UUID operation,NativeRecoveryContext expected,RecoveryFactorCategory category) {
+    private Mono<UUID> issue(UUID operation,NativeRecoveryContext expected,String category) {
         return call(RecoveryAction.ISSUE,operation,caller->{
             sameContext(expected,caller.context());
-            return api.issueRecoveryChallenge(operation,new IssueRecoveryChallengeRequest().binding(caller.context().coreBinding()).category(category))
+            return api.issueRecoveryChallenge(operation,new IssueRecoveryChallengeRequest().binding(caller.context().coreBinding()).category(IssueRecoveryChallengeRequest.CategoryEnum.fromValue(category)))
                 .switchIfEmpty(Mono.error(RecoveryFailure.unavailable())).map(challenge->{
-                    if(challenge.getChallengeId()==null || challenge.getCategory()!=category || !instant(challenge.getExpiresAt()).isAfter(clock.instant())) throw RecoveryFailure.unavailable();
+                    if(challenge.getChallengeId()==null || challenge.getCategory()==null || !category.equals(challenge.getCategory().getValue()) || !instant(challenge.getExpiresAt()).isAfter(clock.instant())) throw RecoveryFailure.unavailable();
                     return challenge.getChallengeId();
                 });
         });
@@ -99,7 +99,7 @@ public final class RecoveryOrchestrator {
                     if(!reference.executionId().equals(journal.executionId()) || !Objects.equals(requestedOutcome,journal.outcome())
                         || !Set.of("PENDING","UNKNOWN","SUCCEEDED","FAILED").contains(journal.outcome()))throw RecoveryFailure.refused();
                     return api.recordRecoveryExecution(operation,new RecordRecoveryExecutionRequest().binding(caller.context().coreBinding())
-                        .executionId(journal.executionId()).outcome(RecoveryExecutionOutcome.fromValue(journal.outcome())));
+                        .executionId(journal.executionId()).outcome(RecordRecoveryExecutionRequest.OutcomeEnum.fromValue(journal.outcome())));
                 });
         });
     }
