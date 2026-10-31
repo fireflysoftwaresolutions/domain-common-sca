@@ -50,7 +50,7 @@ class GeneratedRecoverySdkTest {
     }
     @Test void actualGeneratedClientDecodesUtcReceiptWithoutMutableTokenState() {
         var seen=new AtomicReference<ClientRequest>();
-        WebClient web=WebClient.builder().filter(new ScopedRecoveryBearer(URI.create("https://core.example")))
+        WebClient web=WebClient.builder().exchangeStrategies(UtcRecoveryCodecs.strategies()).filter(new ScopedRecoveryBearer(URI.create("https://core.example")))
             .exchangeFunction(request->{seen.set(request);return Mono.just(ClientResponse.create(HttpStatus.CREATED).header("Content-Type","application/json")
                 .body("{\"operationId\":\"d89c7273-40cd-4827-baf9-e22862799859\",\"expiresAt\":\"2026-10-31T20:01:00Z\"}").build());}).build();
         var client=new ApiClient(web);client.setBasePath("https://core.example");
@@ -64,5 +64,13 @@ class GeneratedRecoverySdkTest {
         assertThat(seen.get().url().getPath()).isEqualTo("/api/v1/sca/recovery-operations");
         assertThat(seen.get().headers().getFirst("Authorization")).isEqualTo("Bearer synthetic-source-fixture");
         assertThat(seen.get().headers()).doesNotContainKey("X-Idempotency-Key");
+    }
+    @Test void actualGeneratedReceiptVerificationRequestUsesRfc3339UtcForCoreInstant() throws Exception {
+        var request=new VerifyRecoveryAuthorizationRequest().executionId(UUID.fromString("c10eceaa-f26b-4964-bd76-93c504250a8e"))
+            .expiresAt(LocalDateTime.of(2026,10,31,20,1));
+        String json=UtcRecoveryCodecs.mapper().writeValueAsString(request);
+        assertThat(json).contains("\"expiresAt\":\"2026-10-31T20:01:00Z\"");
+        var decoded=UtcRecoveryCodecs.mapper().readValue("{\"expiresAt\":\"2026-10-31T21:01:00+01:00\"}",VerifyRecoveryAuthorizationRequest.class);
+        assertThat(decoded.getExpiresAt()).isEqualTo(LocalDateTime.of(2026,10,31,20,1));
     }
 }

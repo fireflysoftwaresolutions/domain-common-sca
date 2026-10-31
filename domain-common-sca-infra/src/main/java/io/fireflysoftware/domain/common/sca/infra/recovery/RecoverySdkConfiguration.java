@@ -36,7 +36,7 @@ public class RecoverySdkConfiguration {
         URI origin=URI.create(coreOrigin);
         WebClient web=WebClient.builder().clientConnector(new ReactorClientHttpConnector(HttpClient.create()
             .followRedirect(false).responseTimeout(Duration.ofSeconds(10))))
-            .codecs(codecs->codecs.defaultCodecs().maxInMemorySize(65536))
+            .exchangeStrategies(UtcRecoveryCodecs.strategies())
             .filter(new ScopedRecoveryBearer(origin)).build();
         ApiClient client=new ApiClient(web);
         client.setBasePath(coreOrigin.endsWith("/")?coreOrigin.substring(0,coreOrigin.length()-1):coreOrigin);
