@@ -161,6 +161,7 @@ firefly:
       allowed-clients: ${SCA_RECOVERY_ALLOWED_CLIENTS}
       max-lifetime-seconds: ${SCA_RECOVERY_MAX_LIFETIME_SECONDS}
       core-origin: ${SCA_RECOVERY_CORE_ORIGIN}
+      native-self-service-policy.enabled: ${SCA_RECOVERY_NATIVE_SELF_SERVICE_POLICY_ENABLED:false}
       native-http:
         enabled: ${SCA_RECOVERY_NATIVE_HTTP_ENABLED:false}
         base-uri: ${SCA_RECOVERY_NATIVE_RPC_URI}

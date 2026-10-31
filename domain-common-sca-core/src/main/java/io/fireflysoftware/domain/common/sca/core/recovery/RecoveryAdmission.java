@@ -48,17 +48,17 @@ public final class RecoveryAdmission {
             Mono<Caller> admission=Mono.defer(security::currentPrincipal)
                 .switchIfEmpty(Mono.error(new RecoveryFailure(RecoveryFailure.Kind.UNAUTHENTICATED)))
                 .flatMap(p->{
-                    validate(p);
+                    validate(p,trust,clock);
                     actor.set(new RecoveryAuditPort.Actor(p.issuer(),p.tenantId(),p.subject(),p.claim("client_id",String.class),p.claim("principal_kind",String.class)));
                     return Mono.defer(()->nativePort.admit(p,trust.purpose(),action,operation)).timeout(Duration.ofSeconds(5))
                         .switchIfEmpty(Mono.error(RecoveryFailure.refused())).flatMap(context->{
-                            validateContext(p,context);
+                            validateContext(p,context,trust,clock);
                             Map<String,Object> policyContext=Map.of("issuer",p.issuer(),"tenantId",p.tenantId(),"actorSubject",p.subject(),
                                 "clientId",p.claim("client_id",String.class),"principalKind",trust.population(),"purpose",trust.purpose(),
                                 "operationId",operation==null?"new":operation.toString(),"lockGeneration",context.lockGeneration());
                             return Mono.defer(()->policy.authorize(p,action.policyAction(),"sca.recovery:"+trust.purpose(),policyContext))
                                 .timeout(Duration.ofSeconds(5)).filter(d->d.granted() && d.obligations().isEmpty())
-                                .switchIfEmpty(Mono.error(RecoveryFailure.refused())).map(d->{validate(p);validateContext(p,context);return new Caller(p,context);});
+                                .switchIfEmpty(Mono.error(RecoveryFailure.refused())).map(d->{validate(p,trust,clock);validateContext(p,context,trust,clock);return new Caller(p,context);});
                         });
                 }).onErrorMap(e->e instanceof RecoveryFailure?e:RecoveryFailure.refused());
             return admission.materialize().flatMap(signal->Mono.defer(()->audit.record(new RecoveryAuditPort.Event(actor.get(),action,
@@ -67,7 +67,7 @@ public final class RecoveryAdmission {
                 .then(signal.isOnError()?Mono.error(signal.getThrowable()):Mono.just(signal.get())));
         });
     }
-    private void validate(SecurityPrincipal p) {
+    static void validate(SecurityPrincipal p,RecoveryTrust trust,Clock clock) {
         var c=p.claims(); Instant now=clock.instant();
         String kind=p.claim("principal_kind",String.class), id=p.claim(trust.population().equals("HUMAN")?"party_id":"staff_actor_id",String.class);
         if (!trust.issuer().equals(p.issuer()) || !trust.issuer().equals(c.get("iss")) || blank(p.subject()) || !p.subject().equals(c.get("sub"))
@@ -79,13 +79,13 @@ public final class RecoveryAdmission {
                 || !trust.realm().equals(c.get("recovery_realm")) || blank(p.claim("recovery_ceremony_id",String.class))
                 || blank(p.claim("recovery_lock_generation",String.class)) || blank(p.claim("jti",String.class))
                 || !p.scopes().equals(Set.of("firefly.recovery")) || !p.authorities().isEmpty()
-                || Set.of("roles","groups","realm_access","resource_access","sid","session_state").stream().anyMatch(c::containsKey)
+                || Set.of("roles","groups","realm_access","resource_access","sid","session_state","act","may_act","delegating_client_id").stream().anyMatch(c::containsKey)
                 || !(c.get("exp") instanceof Instant exp) || !exp.isAfter(now)
                 || !(c.get("iat") instanceof Instant issued) || issued.isAfter(now) || !exp.isAfter(issued)
                 || Duration.between(issued,exp).getSeconds()>trust.maxLifetimeSeconds()
                 || c.containsKey("nbf") && (!(c.get("nbf") instanceof Instant nbf) || nbf.isAfter(now))) throw RecoveryFailure.refused();
     }
-    private void validateContext(SecurityPrincipal p,NativeRecoveryContext c) {
+    static void validateContext(SecurityPrincipal p,NativeRecoveryContext c,RecoveryTrust trust,Clock clock) {
         if (c==null || !Objects.equals(c.issuer(),p.issuer()) || !Objects.equals(c.tenant(),p.tenantId())
                 || !Objects.equals(c.subject(),p.subject()) || !Objects.equals(c.clientId(),p.claim("client_id",String.class))
                 || !trust.realm().equals(c.realm()) || !trust.population().equals(c.population()) || !trust.purpose().equals(c.purpose())

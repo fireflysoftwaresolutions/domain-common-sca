@@ -14,6 +14,8 @@ Every Core hop refreshes native current owner/link/generation/ceremony admission
 
 Jafly's actual `FireflyAuthenticationToken` erases credentials. The receiver delegates its real converter, then narrowly wraps the verified result in `RecoveryAuthenticationToken` retaining the decoder-validated JWT only in reactive request scope. A dedicated Core SDK `WebClient` forwards that request's bearer only to the configured HTTPS Core origin/recovery routes, rejects caller Authorization overrides, and does not follow redirects. It never mutates singleton bearer state. Credentials/tokens are absent from business DTOs and logs.
 
+The optional owning-service `NativeSelfRecoveryPolicy` is separately default-off (`SCA_RECOVERY_NATIVE_SELF_SERVICE_POLICY_ENABLED=true` enables it only alongside actual native HTTP recovery). It permits exactly the seven recovery actions for the approved purpose, revalidates the restricted self profile and exact server-derived context, and independently refreshes the actual native admission for that phase/operation. All other resources/actions/profiles and unavailable current state deny. It is product business policy for native self-unlock, not a replacement bank-wide PDP or BPO/financial authorization. The generic managed framework remains unchanged.
+
 ## Frozen Domain gateway
 
 All paths below use `POST /api/v1/sca/recovery-operations` and bearer authentication. All endpoints opt out of generic HTTP response idempotency caching. Durable Core body keys are server-derived from the signed ceremony, and Core's generation-bound budgets remain authoritative.

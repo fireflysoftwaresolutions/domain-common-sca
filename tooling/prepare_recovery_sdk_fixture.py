@@ -131,13 +131,19 @@ def main():
     jar = sdk / 'target' / f'core-common-sca-mgmt-sdk-{version}.jar'
     run(common + ['-N', '-f', str(flat), 'org.apache.maven.plugins:maven-install-plugin:3.1.4:install-file',
                   f'-Dfile={jar}', f'-DpomFile={flat}'], 'candidate-install')
+    summary.update(candidate_sdk_version=version, candidate_sdk_sha256=sha(jar), candidate_descriptor_sha256=sha(flat),
+                   producer_spec_sha256=sha(spec_path), status='GENERATED_SDK_INSTALLED_DOMAIN_PENDING')
+    (qualification / 'sdk-domain-summary.json').write_text(json.dumps(summary, indent=2) + '\n')
+    if '--candidate-only' in sys.argv:
+        print('Generated candidate SDK installed; Domain verification explicitly not executed')
+        return
     run(common + ['-f', str(ROOT / 'pom.xml'), 'verify'], 'domain-reactor')
     reports = []
     for report in ROOT.glob('domain-common-sca-*/target/surefire-reports/TEST-*.xml'):
         suite = ET.parse(report).getroot()
         if any(word in suite.attrib.get('name', '') for word in ('Recovery', 'GeneratedRecoverySdk', 'ScopedRecoveryBearer')):
             reports.append({key: suite.attrib.get(key, '0') for key in ('name', 'tests', 'failures', 'errors', 'skipped')})
-    required = {'RecoveryAdmissionTest', 'RecoveryOrchestratorTest', 'GeneratedRecoverySdkTest', 'ScopedRecoveryBearerTest', 'RecoveryBoundaryTest', 'RecoveryConfigurationTest', 'RecoveryOpenApiContractTest'}
+    required = {'RecoveryAdmissionTest', 'NativeSelfRecoveryPolicyTest', 'RecoveryOrchestratorTest', 'GeneratedRecoverySdkTest', 'ScopedRecoveryBearerTest', 'RecoveryBoundaryTest', 'RecoveryConfigurationTest', 'RecoveryOpenApiContractTest'}
     if not all(any(r['name'].endswith(name) for r in reports) for name in required) or any(int(r[k]) for r in reports for k in ('failures', 'errors', 'skipped')):
         raise RuntimeError('Required actual Domain/SDK reports missing, failed or skipped')
     summary.update(candidate_sdk_version=version, candidate_sdk_sha256=sha(jar), candidate_descriptor_sha256=sha(flat),
