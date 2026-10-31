@@ -36,3 +36,8 @@ target/
 **/target/generated-resources/
 .refactor-backup-*/
 .metadata-backup*
+
+.work/
+.qualification/
+.flattened-pom.xml
+__pycache__/

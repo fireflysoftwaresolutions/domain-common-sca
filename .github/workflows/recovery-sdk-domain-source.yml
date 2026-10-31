@@ -1,0 +1,45 @@
+name: Recovery original-producer SDK and Domain source
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: recovery-sdk-domain-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  source-fixture:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - id: source
+        run: echo "core=$(cat tooling/recovery-core-source.txt)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: fireflysoftwaresolutions/core-common-sca-mgmt
+          ref: ${{ steps.source.outputs.core }}
+          path: .qualification/core
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: fireflysoftwaresolutions/firefly-parent
+          ref: 6442bd51733ade4d5f4583e1afe812dd2c520b40
+          path: .qualification/firefly-parent
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
+        with:
+          distribution: temurin
+          java-version: '25'
+      - name: Source fixture script tests
+        run: python3 -m unittest discover -s tooling/tests -v
+      - name: YAML parser for immutable original-producer assertions
+        run: python3 -m pip install --disable-pip-version-check PyYAML==6.0.3
+      - name: Actual producer, generated candidate artifact and Domain reactor
+        run: python3 tooling/prepare_recovery_sdk_fixture.py
+      - name: Preserve bounded source-only provenance
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: recovery-sdk-domain-source-summary
+          path: .qualification/sdk-domain-summary.json
+          if-no-files-found: ignore
+          retention-days: 14
