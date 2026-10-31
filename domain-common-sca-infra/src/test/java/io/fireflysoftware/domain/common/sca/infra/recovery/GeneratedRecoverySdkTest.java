@@ -58,7 +58,7 @@ class GeneratedRecoverySdkTest {
         var jwt=Jwt.withTokenValue("synthetic-source-fixture").header("alg","RS256").subject("opaque")
             .issuedAt(Instant.now()).expiresAt(Instant.now().plusSeconds(60)).build();
         StepVerifier.create(api.createRecoveryOperation(new CreateRecoveryOperationRequest().idempotencyKey("source-fixture"))
-            .contextWrite(ReactiveSecurityContextHolder.withAuthentication(new JwtAuthenticationToken(jwt))))
+            .contextWrite(ReactiveSecurityContextHolder.withAuthentication(new JwtAuthenticationToken(jwt,List.of()))))
             .assertNext(value->{assertThat(value.getOperationId()).isEqualTo(UUID.fromString("d89c7273-40cd-4827-baf9-e22862799859"));
                 assertThat(value.getExpiresAt()).isEqualTo(LocalDateTime.of(2026,10,31,20,1));}).verifyComplete();
         assertThat(seen.get().url().getPath()).isEqualTo("/api/v1/sca/recovery-operations");

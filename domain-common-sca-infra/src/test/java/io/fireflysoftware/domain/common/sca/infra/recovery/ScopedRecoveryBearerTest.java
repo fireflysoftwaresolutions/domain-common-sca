@@ -55,6 +55,6 @@ class ScopedRecoveryBearerTest {
     }
     private static JwtAuthenticationToken authentication(String value) {
         return new JwtAuthenticationToken(Jwt.withTokenValue(value).header("alg","RS256").subject("opaque")
-            .issuedAt(Instant.now()).expiresAt(Instant.now().plusSeconds(60)).build());
+            .issuedAt(Instant.now()).expiresAt(Instant.now().plusSeconds(60)).build(),List.of());
     }
 }
