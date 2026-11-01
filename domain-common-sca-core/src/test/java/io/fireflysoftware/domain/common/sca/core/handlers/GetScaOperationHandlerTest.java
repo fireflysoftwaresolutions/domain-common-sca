@@ -31,6 +31,7 @@ import reactor.test.StepVerifier;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -52,7 +53,7 @@ class GetScaOperationHandlerTest {
         GetScaOperationQuery query = new GetScaOperationQuery(operationId);
 
         SCAOperationDTO dto = new SCAOperationDTO().status(SCAOperationDTO.StatusEnum.PENDING);
-        when(scaOperationApi.getOperation(operationId, any()))
+        when(scaOperationApi.getOperation(eq(operationId), any()))
                 .thenReturn(Mono.just(dto));
 
         StepVerifier.create(handler.doHandle(query))
@@ -65,7 +66,7 @@ class GetScaOperationHandlerTest {
         UUID operationId = UUID.randomUUID();
         GetScaOperationQuery query = new GetScaOperationQuery(operationId);
 
-        when(scaOperationApi.getOperation(operationId, any()))
+        when(scaOperationApi.getOperation(eq(operationId), any()))
                 .thenReturn(Mono.error(new RuntimeException("not found")));
 
         StepVerifier.create(handler.doHandle(query))
