@@ -39,7 +39,7 @@ import java.util.UUID;
 @Slf4j
 @Component
 @Saga(name = "initiate-sca")
-public class InitiateScaSaga {
+public class InitiateScaSagaImpl {
 
     /** Name of this saga as registered with the SagaEngine. */
     public static final String SAGA_NAME = "initiate-sca";
@@ -59,7 +59,7 @@ public class InitiateScaSaga {
     private final ScaOperationControllerApi scaOperationApi;
     private final ScaChallengeControllerApi scaChallengeApi;
 
-    public InitiateScaSaga(ScaOperationControllerApi scaOperationApi,
+    public InitiateScaSagaImpl(ScaOperationControllerApi scaOperationApi,
                            ScaChallengeControllerApi scaChallengeApi) {
         this.scaOperationApi = scaOperationApi;
         this.scaChallengeApi = scaChallengeApi;

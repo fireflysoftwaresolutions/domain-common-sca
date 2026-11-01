@@ -18,7 +18,7 @@
 package io.fireflysoftware.domain.common.sca.core.handlers;
 
 import io.fireflysoftware.domain.common.sca.core.commands.VerifyScaAttemptCommand;
-import io.fireflysoftware.domain.common.sca.core.sagas.VerifyScaSaga;
+import io.fireflysoftware.domain.common.sca.core.sagas.VerifyScaSagaImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.fireflyframework.cqrs.annotations.CommandHandlerComponent;
 import org.fireflyframework.cqrs.command.CommandHandler;
@@ -32,11 +32,11 @@ import reactor.core.publisher.Mono;
  */
 @Slf4j
 @CommandHandlerComponent(timeout = 30000, metrics = true, tracing = true)
-public class VerifyScaAttemptHandler extends CommandHandler<VerifyScaAttemptCommand, SagaResult> {
+public class VerifyScaAttemptHandlerImpl extends CommandHandler<VerifyScaAttemptCommand, SagaResult> {
 
     private final SagaEngine sagaEngine;
 
-    public VerifyScaAttemptHandler(SagaEngine sagaEngine) {
+    public VerifyScaAttemptHandlerImpl(SagaEngine sagaEngine) {
         this.sagaEngine = sagaEngine;
     }
 
@@ -44,7 +44,7 @@ public class VerifyScaAttemptHandler extends CommandHandler<VerifyScaAttemptComm
     protected Mono<SagaResult> doHandle(VerifyScaAttemptCommand command) {
         log.debug("Dispatching verify-sca saga for operationId={}", command.getOperationId());
 
-        StepInputs inputs = StepInputs.of(VerifyScaSaga.STEP_VALIDATE_ATTEMPT, command);
-        return sagaEngine.execute(VerifyScaSaga.SAGA_NAME, inputs);
+        StepInputs inputs = StepInputs.of(VerifyScaSagaImpl.STEP_VALIDATE_ATTEMPT, command);
+        return sagaEngine.execute(VerifyScaSagaImpl.SAGA_NAME, inputs);
     }
 }

@@ -40,11 +40,11 @@ class GetScaStatusHistoryHandlerTest {
     @Mock
     private ScaOperationHistoryControllerApi scaHistoryApi;
 
-    private GetScaStatusHistoryHandler handler;
+    private GetScaStatusHistoryHandlerImpl handler;
 
     @BeforeEach
     void setUp() {
-        handler = new GetScaStatusHistoryHandler(scaHistoryApi);
+        handler = new GetScaStatusHistoryHandlerImpl(scaHistoryApi);
     }
 
     @Test

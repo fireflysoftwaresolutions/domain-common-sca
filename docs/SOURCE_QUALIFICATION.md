@@ -1,5 +1,7 @@
 # Native recovery Domain and original-producer SDK source qualification
 
+The current `Impl` naming revision requires a fresh hosted qualification against its newly pinned Core source. The receipt below applies only to the earlier, pre-naming code; it does not qualify the renamed implementations.
+
 [Draft PR 1](https://github.com/fireflysoftwaresolutions/domain-common-sca/pull/1), code head `d32ecca07e3dfd3a2330c201e555e95b89476c89`, passed [hosted run 41252856215](https://github.com/fireflysoftwaresolutions/domain-common-sca/actions/runs/41252856215). GitHub executed its PR merge checkout `afb3c681032520db97a368016b12a62adb5cf0c8`. These are different source references: the first is the proposed branch code, the second is the actual tested merge source.
 
 The complete genuine Maven Domain reactor `verify` succeeded, including the original Domain OpenAPI producer and SDK generator. The bounded [source summary artifact 13061229916](https://github.com/fireflysoftwaresolutions/domain-common-sca/actions/runs/41252856215/artifacts/13061229916) records all **23 required recovery, policy, native HTTP transport, scoped bearer, generated SDK and original-producer tests passing with zero failures, errors or skips**. Two separate Python fixture-isolation tests also passed. Source compilation and tests ran only on the hosted runner; no local Java/Maven/dependency/container execution was performed under the capacity floor.

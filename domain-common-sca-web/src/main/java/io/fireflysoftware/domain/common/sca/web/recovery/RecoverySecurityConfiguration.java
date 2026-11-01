@@ -68,12 +68,12 @@ public class RecoverySecurityConfiguration {
         return new RecoveryTrust(issuer,realm,population,audiences,clients,"PERMANENT_AUTHENTICATION_UNLOCK",ttl);
     }
     @Bean @ConditionalOnProperty(name="firefly.sca.recovery.enabled",havingValue="true")
-    public RecoveryAdmission recoveryAdmission(SecurityContextPort security,PolicyDecisionPort policy,NativeRecoveryPort nativePort,RecoveryAuditPort audit,RecoveryTrust trust){
-        return new RecoveryAdmission(security,policy,nativePort,audit,trust,Clock.systemUTC());
+    public RecoveryAdmissionImpl recoveryAdmission(SecurityContextPort security,PolicyDecisionPort policy,NativeRecoveryPort nativePort,RecoveryAuditPort audit,RecoveryTrust trust){
+        return new RecoveryAdmissionImpl(security,policy,nativePort,audit,trust,Clock.systemUTC());
     }
     @Bean @ConditionalOnProperty(name="firefly.sca.recovery.enabled",havingValue="true")
-    public RecoveryOrchestrator recoveryOrchestrator(ScaRecoveryApi api,RecoveryAdmission admission,NativeRecoveryPort nativePort){
-        return new RecoveryOrchestrator(api,admission,nativePort,Clock.systemUTC());
+    public RecoveryOrchestratorImpl recoveryOrchestrator(ScaRecoveryApi api,RecoveryAdmissionImpl admission,NativeRecoveryPort nativePort){
+        return new RecoveryOrchestratorImpl(api,admission,nativePort,Clock.systemUTC());
     }
     @Bean @ConditionalOnProperty(name="firefly.sca.recovery.enabled",havingValue="true")
     public SecurityWebFilterChain enabled(ServerHttpSecurity http,ReactiveJwtDecoder decoder,Converter<Jwt,Mono<AbstractAuthenticationToken>> converter,

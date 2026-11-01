@@ -25,9 +25,9 @@ import reactor.core.publisher.Mono;
 import java.net.URI;
 
 /** Per-subscription bearer relay to one configured Core recovery origin, with no mutable token state. */
-public final class ScopedRecoveryBearer implements ExchangeFilterFunction {
+public final class ScopedRecoveryBearerImpl implements ExchangeFilterFunction {
     private final URI origin;
-    public ScopedRecoveryBearer(URI origin) {
+    public ScopedRecoveryBearerImpl(URI origin) {
         if(origin==null || !"https".equals(origin.getScheme()) || origin.getHost()==null || origin.getUserInfo()!=null
             || origin.getRawQuery()!=null || origin.getFragment()!=null || !SetPath.root(origin.getRawPath()))
             throw new IllegalArgumentException("Explicit HTTPS Core recovery origin required");

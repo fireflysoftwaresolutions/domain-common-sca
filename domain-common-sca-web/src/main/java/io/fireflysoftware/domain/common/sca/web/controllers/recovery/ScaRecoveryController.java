@@ -41,9 +41,9 @@ import java.util.function.Function;
 @ApiResponses({@ApiResponse(responseCode="401",description="Verified restricted recovery assertion required"),
     @ApiResponse(responseCode="403",description="Recovery refused"),@ApiResponse(responseCode="503",description="Recovery unavailable")})
 public class ScaRecoveryController {
-    private final ObjectProvider<RecoveryOrchestrator> services;
+    private final ObjectProvider<RecoveryOrchestratorImpl> services;
     private final ObjectProvider<RecoveryAuditPort> audits;
-    public ScaRecoveryController(ObjectProvider<RecoveryOrchestrator> services,ObjectProvider<RecoveryAuditPort> audits){this.services=services;this.audits=audits;}
+    public ScaRecoveryController(ObjectProvider<RecoveryOrchestratorImpl> services,ObjectProvider<RecoveryAuditPort> audits){this.services=services;this.audits=audits;}
     public record ChallengeRequest(UUID challengeId) { }
     public record CompletionRequest(UUID challengeId,UUID reservationId,String attestation) {
         @Override public String toString(){return "CompletionRequest[redacted]";}
@@ -74,7 +74,7 @@ public class ScaRecoveryController {
         return respond(service->request==null?Mono.error(new RecoveryFailure(RecoveryFailure.Kind.INVALID)):
             service.record(operationId,new RecoveryAuthorization(operationId,request.executionId(),null,request.expiresAt()),request.outcome()),HttpStatus.NO_CONTENT);
     }
-    private <T> Mono<ResponseEntity<T>> respond(Function<RecoveryOrchestrator,Mono<T>> action,HttpStatus status){
+    private <T> Mono<ResponseEntity<T>> respond(Function<RecoveryOrchestratorImpl,Mono<T>> action,HttpStatus status){
         return Mono.defer(()->{var service=services.getIfAvailable();return service==null?Mono.<T>error(RecoveryFailure.unavailable()):action.apply(service);})
             .map(value->ResponseEntity.status(status).body(value)).defaultIfEmpty(ResponseEntity.status(status).build())
             .onErrorResume(error->{HttpStatus response=HttpStatus.SERVICE_UNAVAILABLE;

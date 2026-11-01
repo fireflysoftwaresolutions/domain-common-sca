@@ -34,7 +34,7 @@ import static org.assertj.core.api.Assertions.*;
 class ScopedRecoveryBearerTest {
     @Test void concurrentSubscriptionsRelayOnlyTheirOwnValidatedContextAndCannotOverrideDestinationOrHeader() {
         var seen=new CopyOnWriteArrayList<String>();
-        WebClient client=WebClient.builder().filter(new ScopedRecoveryBearer(URI.create("https://core.example")))
+        WebClient client=WebClient.builder().filter(new ScopedRecoveryBearerImpl(URI.create("https://core.example")))
             .exchangeFunction(request->{seen.add(request.headers().getFirst("Authorization"));return Mono.just(ClientResponse.create(HttpStatus.OK).body("ok").build());}).build();
         var a=client.post().uri("https://core.example/api/v1/sca/recovery-operations").retrieve().bodyToMono(String.class)
             .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication("synthetic-token-a")));
@@ -49,7 +49,7 @@ class ScopedRecoveryBearerTest {
         assertThat(seen).hasSize(2);
     }
     @Test void absentCredentialsCannotSilentlyBecomeAnonymousSdkRequest() {
-        WebClient client=WebClient.builder().filter(new ScopedRecoveryBearer(URI.create("https://core.example")))
+        WebClient client=WebClient.builder().filter(new ScopedRecoveryBearerImpl(URI.create("https://core.example")))
             .exchangeFunction(request->Mono.error(new AssertionError("Downstream must not be called"))).build();
         StepVerifier.create(client.post().uri("https://core.example/api/v1/sca/recovery-operations").retrieve().bodyToMono(String.class)).expectError().verify();
     }

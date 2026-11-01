@@ -34,12 +34,12 @@ import java.util.UUID;
  */
 @Slf4j
 @QueryHandlerComponent(cacheable = false, metrics = true)
-public class GetScaAttemptsHandler extends QueryHandler<GetScaAttemptsQuery, PaginationResponseSCAAttemptDTO> {
+public class GetScaAttemptsHandlerImpl extends QueryHandler<GetScaAttemptsQuery, PaginationResponseSCAAttemptDTO> {
 
     private final ScaChallengeControllerApi scaChallengeApi;
     private final ScaAttemptControllerApi scaAttemptApi;
 
-    public GetScaAttemptsHandler(ScaChallengeControllerApi scaChallengeApi,
+    public GetScaAttemptsHandlerImpl(ScaChallengeControllerApi scaChallengeApi,
                                   ScaAttemptControllerApi scaAttemptApi) {
         this.scaChallengeApi = scaChallengeApi;
         this.scaAttemptApi = scaAttemptApi;

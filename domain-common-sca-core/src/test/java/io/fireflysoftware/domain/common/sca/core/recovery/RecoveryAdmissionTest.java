@@ -64,7 +64,7 @@ class RecoveryAdmissionTest {
     }; }
     @Test void missingOrOrdinaryOrCrossPopulationPrincipalNeverReachesNativeAdmission() {
         var calls=new AtomicInteger(); var policy=mock(PolicyDecisionPort.class);
-        var absent=new RecoveryAdmission(Mono::empty,policy,nativePort(calls),audit(),trust(),Clock.fixed(NOW,ZoneOffset.UTC));
+        var absent=new RecoveryAdmissionImpl(Mono::empty,policy,nativePort(calls),audit(),trust(),Clock.fixed(NOW,ZoneOffset.UTC));
         StepVerifier.create(absent.admit(RecoveryAction.BEGIN,null)).expectError(RecoveryFailure.class).verify();
         for(var changes:List.of(Map.<String,Object>of("recovery_only",false), Map.<String,Object>of("client_id","other"),
             Map.<String,Object>of("principal_kind","STAFF"),Map.<String,Object>of("staff_actor_id",ACTOR),
@@ -72,7 +72,7 @@ class RecoveryAdmissionTest {
             Map.<String,Object>of("iss","https://untrusted.example"), Map.<String,Object>of("tenant_id","other-tenant"),
             Map.<String,Object>of("roles",List.of("admin")),Map.<String,Object>of("recovery_ceremony_id","<absent>"),
             Map.<String,Object>of("iat",123L),Map.<String,Object>of("exp",NOW),Map.<String,Object>of("nbf",NOW.plusSeconds(1)),Map.<String,Object>of("client_id","<absent>"))) {
-            var guard=new RecoveryAdmission(()->Mono.just(actor(changes)),policy,nativePort(calls),audit(),trust(),Clock.fixed(NOW,ZoneOffset.UTC));
+            var guard=new RecoveryAdmissionImpl(()->Mono.just(actor(changes)),policy,nativePort(calls),audit(),trust(),Clock.fixed(NOW,ZoneOffset.UTC));
             StepVerifier.create(guard.admit(RecoveryAction.BEGIN,null)).expectError(RecoveryFailure.class).verify();
         }
         assertThat(calls.get()).isZero(); verifyNoInteractions(policy);
@@ -81,7 +81,7 @@ class RecoveryAdmissionTest {
         var policy=mock(PolicyDecisionPort.class); var calls=new AtomicInteger();
         when(policy.authorize(any(),eq("sca.recovery.create"),eq("sca.recovery:"+PURPOSE),anyMap()))
             .thenReturn(Mono.just(Decision.deny("refused")));
-        var guard=new RecoveryAdmission(()->Mono.just(actor(Map.of())),policy,nativePort(calls),audit(),trust(),Clock.fixed(NOW,ZoneOffset.UTC));
+        var guard=new RecoveryAdmissionImpl(()->Mono.just(actor(Map.of())),policy,nativePort(calls),audit(),trust(),Clock.fixed(NOW,ZoneOffset.UTC));
         StepVerifier.create(guard.admit(RecoveryAction.BEGIN,null)).expectError(RecoveryFailure.class).verify();
         assertThat(calls.get()).isEqualTo(1);
         when(policy.authorize(any(),anyString(),anyString(),anyMap())).thenReturn(Mono.error(new IllegalStateException("private provider URL")));
@@ -91,16 +91,16 @@ class RecoveryAdmissionTest {
         var sink=new RecoveryAuditPort(){ public boolean isQualified(){return true;} public Mono<Void> record(Event e){return Mono.error(new IllegalStateException("secret"));} };
         var policy=mock(PolicyDecisionPort.class);
         when(policy.authorize(any(),anyString(),anyString(),anyMap())).thenReturn(Mono.just(Decision.permit()));
-        var guard=new RecoveryAdmission(()->Mono.just(actor(Map.of())),policy,nativePort(new AtomicInteger()),sink,trust(),Clock.fixed(NOW,ZoneOffset.UTC));
+        var guard=new RecoveryAdmissionImpl(()->Mono.just(actor(Map.of())),policy,nativePort(new AtomicInteger()),sink,trust(),Clock.fixed(NOW,ZoneOffset.UTC));
         StepVerifier.create(guard.admit(RecoveryAction.BEGIN,null)).expectError(RecoveryFailure.class).verify();
-        assertThatThrownBy(()->new RecoveryAdmission(Mono::empty,policy,mock(NativeRecoveryPort.class),audit(),trust(),Clock.systemUTC()))
+        assertThatThrownBy(()->new RecoveryAdmissionImpl(Mono::empty,policy,mock(NativeRecoveryPort.class),audit(),trust(),Clock.systemUTC()))
             .isInstanceOf(IllegalStateException.class);
     }
     @Test void policyIndeterminateObligationsAndEmptyDecisionDeny() {
         for(var result:List.of(Mono.just(Decision.indeterminate("indeterminate")),Mono.just(Decision.permit(List.of(
                 org.fireflyframework.security.api.domain.Obligation.of("unsupported",Map.of())))),Mono.<Decision>empty())) {
             var policy=mock(PolicyDecisionPort.class);when(policy.authorize(any(),anyString(),anyString(),anyMap())).thenReturn(result);
-            var guard=new RecoveryAdmission(()->Mono.just(actor(Map.of())),policy,nativePort(new AtomicInteger()),audit(),trust(),Clock.fixed(NOW,ZoneOffset.UTC));
+            var guard=new RecoveryAdmissionImpl(()->Mono.just(actor(Map.of())),policy,nativePort(new AtomicInteger()),audit(),trust(),Clock.fixed(NOW,ZoneOffset.UTC));
             StepVerifier.create(guard.admit(RecoveryAction.BEGIN,null)).expectError(RecoveryFailure.class).verify();
         }
     }
@@ -109,7 +109,7 @@ class RecoveryAdmissionTest {
         Clock clock=new Clock(){public ZoneId getZone(){return ZoneOffset.UTC;}public Clock withZone(ZoneId zone){return this;}public Instant instant(){return now.get();}};
         var policy=mock(PolicyDecisionPort.class);
         when(policy.authorize(any(),anyString(),anyString(),anyMap())).thenAnswer(call->{now.set(NOW.plusSeconds(121));return Mono.just(Decision.permit());});
-        var guard=new RecoveryAdmission(()->Mono.just(actor(Map.of())),policy,nativePort(new AtomicInteger()),audit(),trust(),clock);
+        var guard=new RecoveryAdmissionImpl(()->Mono.just(actor(Map.of())),policy,nativePort(new AtomicInteger()),audit(),trust(),clock);
         StepVerifier.create(guard.admit(RecoveryAction.BEGIN,null)).expectError(RecoveryFailure.class).verify();
     }
 }

@@ -18,7 +18,7 @@
 package io.fireflysoftware.domain.common.sca.core.handlers;
 
 import io.fireflysoftware.domain.common.sca.core.commands.VerifyScaAttemptCommand;
-import io.fireflysoftware.domain.common.sca.core.sagas.VerifyScaSaga;
+import io.fireflysoftware.domain.common.sca.core.sagas.VerifyScaSagaImpl;
 import org.fireflyframework.orchestration.saga.engine.SagaResult;
 import org.fireflyframework.orchestration.saga.engine.StepInputs;
 import org.fireflyframework.orchestration.saga.engine.SagaEngine;
@@ -44,11 +44,11 @@ class VerifyScaAttemptHandlerTest {
     @Mock
     private SagaEngine sagaEngine;
 
-    private VerifyScaAttemptHandler handler;
+    private VerifyScaAttemptHandlerImpl handler;
 
     @BeforeEach
     void setUp() {
-        handler = new VerifyScaAttemptHandler(sagaEngine);
+        handler = new VerifyScaAttemptHandlerImpl(sagaEngine);
     }
 
     @Test
@@ -58,7 +58,7 @@ class VerifyScaAttemptHandlerTest {
         VerifyScaAttemptCommand command = new VerifyScaAttemptCommand(operationId, challengeId, "123456");
 
         SagaResult expectedResult = mock(SagaResult.class);
-        when(sagaEngine.execute(eq(VerifyScaSaga.SAGA_NAME), any(StepInputs.class)))
+        when(sagaEngine.execute(eq(VerifyScaSagaImpl.SAGA_NAME), any(StepInputs.class)))
                 .thenReturn(Mono.just(expectedResult));
 
         StepVerifier.create(handler.doHandle(command))
@@ -66,7 +66,7 @@ class VerifyScaAttemptHandlerTest {
                 .verifyComplete();
 
         ArgumentCaptor<StepInputs> captor = ArgumentCaptor.forClass(StepInputs.class);
-        verify(sagaEngine).execute(eq(VerifyScaSaga.SAGA_NAME), captor.capture());
+        verify(sagaEngine).execute(eq(VerifyScaSagaImpl.SAGA_NAME), captor.capture());
         assertThat(captor.getValue()).isNotNull();
     }
 
@@ -76,7 +76,7 @@ class VerifyScaAttemptHandlerTest {
         UUID challengeId = UUID.randomUUID();
         VerifyScaAttemptCommand command = new VerifyScaAttemptCommand(operationId, challengeId, "wrong");
 
-        when(sagaEngine.execute(eq(VerifyScaSaga.SAGA_NAME), any(StepInputs.class)))
+        when(sagaEngine.execute(eq(VerifyScaSagaImpl.SAGA_NAME), any(StepInputs.class)))
                 .thenReturn(Mono.error(new RuntimeException("verification error")));
 
         StepVerifier.create(handler.doHandle(command))

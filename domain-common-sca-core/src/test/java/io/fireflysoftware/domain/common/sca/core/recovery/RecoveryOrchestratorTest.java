@@ -36,12 +36,12 @@ class RecoveryOrchestratorTest {
     final UUID operation=UUID.fromString("d89c7273-40cd-4827-baf9-e22862799859");
     final UUID execution=UUID.fromString("c10eceaa-f26b-4964-bd76-93c504250a8e");
     final ScaRecoveryApi api=mock(ScaRecoveryApi.class);
-    RecoveryOrchestrator service(NativeRecoveryPort nativePort) {
+    RecoveryOrchestratorImpl service(NativeRecoveryPort nativePort) {
         var policy=mock(PolicyDecisionPort.class);
         when(policy.authorize(any(),anyString(),anyString(),anyMap())).thenReturn(Mono.just(Decision.permit()));
-        var guard=new RecoveryAdmission(()->Mono.just(RecoveryAdmissionTest.actor(Map.of())),policy,nativePort,
+        var guard=new RecoveryAdmissionImpl(()->Mono.just(RecoveryAdmissionTest.actor(Map.of())),policy,nativePort,
             RecoveryAdmissionTest.audit(),RecoveryAdmissionTest.trust(),Clock.fixed(RecoveryAdmissionTest.NOW,ZoneOffset.UTC));
-        return new RecoveryOrchestrator(api,guard,nativePort,Clock.fixed(RecoveryAdmissionTest.NOW,ZoneOffset.UTC));
+        return new RecoveryOrchestratorImpl(api,guard,nativePort,Clock.fixed(RecoveryAdmissionTest.NOW,ZoneOffset.UTC));
     }
     @Test void consumeReturnsOnlyBoundReceiptAndNeverExecutesOrReadsNativeJournal() {
         var port=spy(RecoveryAdmissionTest.nativePort(new AtomicInteger()));

@@ -18,7 +18,7 @@
 package io.fireflysoftware.domain.common.sca.core.handlers;
 
 import io.fireflysoftware.domain.common.sca.core.commands.InitiateScaOperationCommand;
-import io.fireflysoftware.domain.common.sca.core.sagas.InitiateScaSaga;
+import io.fireflysoftware.domain.common.sca.core.sagas.InitiateScaSagaImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.fireflyframework.cqrs.annotations.CommandHandlerComponent;
 import org.fireflyframework.cqrs.command.CommandHandler;
@@ -32,11 +32,11 @@ import reactor.core.publisher.Mono;
  */
 @Slf4j
 @CommandHandlerComponent(timeout = 30000, metrics = true, tracing = true)
-public class InitiateScaOperationHandler extends CommandHandler<InitiateScaOperationCommand, SagaResult> {
+public class InitiateScaOperationHandlerImpl extends CommandHandler<InitiateScaOperationCommand, SagaResult> {
 
     private final SagaEngine sagaEngine;
 
-    public InitiateScaOperationHandler(SagaEngine sagaEngine) {
+    public InitiateScaOperationHandlerImpl(SagaEngine sagaEngine) {
         this.sagaEngine = sagaEngine;
     }
 
@@ -44,7 +44,7 @@ public class InitiateScaOperationHandler extends CommandHandler<InitiateScaOpera
     protected Mono<SagaResult> doHandle(InitiateScaOperationCommand command) {
         log.debug("Dispatching initiate-sca saga for resourceId={}", command.getResourceId());
 
-        StepInputs inputs = StepInputs.of(InitiateScaSaga.STEP_CREATE_OPERATION, command);
-        return sagaEngine.execute(InitiateScaSaga.SAGA_NAME, inputs);
+        StepInputs inputs = StepInputs.of(InitiateScaSagaImpl.STEP_CREATE_OPERATION, command);
+        return sagaEngine.execute(InitiateScaSagaImpl.SAGA_NAME, inputs);
     }
 }

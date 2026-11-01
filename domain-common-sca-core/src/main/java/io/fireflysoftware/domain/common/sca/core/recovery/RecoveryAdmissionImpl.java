@@ -26,14 +26,14 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /** Generic verified-principal/current-policy admission plus independent native self-only current-state proof. */
-public final class RecoveryAdmission {
+public final class RecoveryAdmissionImpl {
     private final SecurityContextPort security;
     private final PolicyDecisionPort policy;
     private final NativeRecoveryPort nativePort;
     private final RecoveryAuditPort audit;
     private final RecoveryTrust trust;
     private final Clock clock;
-    public RecoveryAdmission(SecurityContextPort security,PolicyDecisionPort policy,NativeRecoveryPort nativePort,
+    public RecoveryAdmissionImpl(SecurityContextPort security,PolicyDecisionPort policy,NativeRecoveryPort nativePort,
             RecoveryAuditPort audit,RecoveryTrust trust,Clock clock) {
         if (security==null || policy==null || nativePort==null || !nativePort.isQualified() || audit==null || !audit.isQualified())
             throw new IllegalStateException("Qualified native admission and durable audit required");

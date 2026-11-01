@@ -25,12 +25,12 @@ import java.util.*;
 import java.util.function.Function;
 
 /** Owns no proof store or native mutation. Every downstream operation refreshes actor/current-native/PDP admission. */
-public final class RecoveryOrchestrator {
+public final class RecoveryOrchestratorImpl {
     private final ScaRecoveryApi api;
-    private final RecoveryAdmission admission;
+    private final RecoveryAdmissionImpl admission;
     private final NativeRecoveryPort nativePort;
     private final Clock clock;
-    public RecoveryOrchestrator(ScaRecoveryApi api,RecoveryAdmission admission,NativeRecoveryPort nativePort,Clock clock) {
+    public RecoveryOrchestratorImpl(ScaRecoveryApi api,RecoveryAdmissionImpl admission,NativeRecoveryPort nativePort,Clock clock) {
         this.api=Objects.requireNonNull(api);this.admission=Objects.requireNonNull(admission);this.nativePort=Objects.requireNonNull(nativePort);this.clock=Objects.requireNonNull(clock);
     }
     public Mono<RecoveryStart> begin() {
@@ -111,7 +111,7 @@ public final class RecoveryOrchestrator {
     private void checkReference(UUID operation,UUID execution,Instant expiry,boolean future) {
         if(operation==null || execution==null || expiry==null || future && !expiry.isAfter(clock.instant()))throw RecoveryFailure.refused();
     }
-    private <T> Mono<T> call(RecoveryAction action,UUID operation,Function<RecoveryAdmission.Caller,Mono<T>> invocation) {
+    private <T> Mono<T> call(RecoveryAction action,UUID operation,Function<RecoveryAdmissionImpl.Caller,Mono<T>> invocation) {
         return Mono.defer(()->{
             if(action!=RecoveryAction.BEGIN && operation==null)throw new RecoveryFailure(RecoveryFailure.Kind.INVALID);
             return admission.admit(action,operation).flatMap(caller->Mono.defer(()->invocation.apply(caller))).timeout(Duration.ofSeconds(15));

@@ -17,7 +17,7 @@
 
 package io.fireflysoftware.domain.common.sca.core.recovery;
 
-import io.fireflysoftware.domain.common.sca.core.recovery.http.NativeRecoveryHttpPort;
+import io.fireflysoftware.domain.common.sca.core.recovery.http.NativeRecoveryHttpPortImpl;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -34,9 +34,9 @@ class NativeSelfRecoveryPolicyTest {
         "clientId","configured-ceremony-client","principalKind","HUMAN","purpose",RecoveryAdmissionTest.PURPOSE,
         "operationId",OPERATION.toString(),"lockGeneration","generation-1");}
     @Test void exactRecoveryActionAndServerContextRequireCurrentNativeOwnerBeforePermit() {
-        var nativePort=mock(NativeRecoveryHttpPort.class);when(nativePort.isQualified()).thenReturn(true);
+        var nativePort=mock(NativeRecoveryHttpPortImpl.class);when(nativePort.isQualified()).thenReturn(true);
         when(nativePort.admit(any(),eq(RecoveryAdmissionTest.PURPOSE),eq(RecoveryAction.CONSUME),eq(OPERATION))).thenReturn(Mono.just(RecoveryAdmissionTest.context()));
-        var policy=new NativeSelfRecoveryPolicy(nativePort,RecoveryAdmissionTest.trust(),Clock.fixed(RecoveryAdmissionTest.NOW,ZoneOffset.UTC));
+        var policy=new NativeSelfRecoveryPolicyImpl(nativePort,RecoveryAdmissionTest.trust(),Clock.fixed(RecoveryAdmissionTest.NOW,ZoneOffset.UTC));
         StepVerifier.create(policy.authorize(RecoveryAdmissionTest.actor(Map.of()),"sca.recovery.authorization.consume","sca.recovery:"+RecoveryAdmissionTest.PURPOSE,context()))
             .assertNext(decision->{assertThat(decision.granted()).isTrue();assertThat(decision.obligations()).isEmpty();}).verifyComplete();
         when(nativePort.admit(any(),anyString(),any(),any())).thenReturn(Mono.error(new IllegalStateException("private")));
@@ -44,8 +44,8 @@ class NativeSelfRecoveryPolicyTest {
             .assertNext(decision->assertThat(decision.granted()).isFalse()).verifyComplete();
     }
     @Test void financialUnknownMachineOrForgedServerContextNeverCallsNativeOwner() {
-        var nativePort=mock(NativeRecoveryHttpPort.class);when(nativePort.isQualified()).thenReturn(true);
-        var policy=new NativeSelfRecoveryPolicy(nativePort,RecoveryAdmissionTest.trust(),Clock.fixed(RecoveryAdmissionTest.NOW,ZoneOffset.UTC));
+        var nativePort=mock(NativeRecoveryHttpPortImpl.class);when(nativePort.isQualified()).thenReturn(true);
+        var policy=new NativeSelfRecoveryPolicyImpl(nativePort,RecoveryAdmissionTest.trust(),Clock.fixed(RecoveryAdmissionTest.NOW,ZoneOffset.UTC));
         for(String action:List.of("payments.execute","sca.recovery.unknown"))
             StepVerifier.create(policy.authorize(RecoveryAdmissionTest.actor(Map.of()),action,"sca.recovery:"+RecoveryAdmissionTest.PURPOSE,context()))
                 .assertNext(decision->assertThat(decision.granted()).isFalse()).verifyComplete();

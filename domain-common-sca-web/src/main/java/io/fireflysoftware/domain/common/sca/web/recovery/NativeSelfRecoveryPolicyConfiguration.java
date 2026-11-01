@@ -26,5 +26,5 @@ import java.time.Clock;
 @Configuration(proxyBeanMethods=false)
 @ConditionalOnProperty(name={"firefly.sca.recovery.enabled","firefly.sca.recovery.native-http.enabled","firefly.sca.recovery.native-self-service-policy.enabled"},havingValue="true")
 public class NativeSelfRecoveryPolicyConfiguration {
-    @Bean PolicyDecisionPort nativeSelfRecoveryPolicy(NativeRecoveryPort nativePort,RecoveryTrust trust){return new NativeSelfRecoveryPolicy(nativePort,trust,Clock.systemUTC());}
+    @Bean PolicyDecisionPort nativeSelfRecoveryPolicy(NativeRecoveryPort nativePort,RecoveryTrust trust){return new NativeSelfRecoveryPolicyImpl(nativePort,trust,Clock.systemUTC());}
 }

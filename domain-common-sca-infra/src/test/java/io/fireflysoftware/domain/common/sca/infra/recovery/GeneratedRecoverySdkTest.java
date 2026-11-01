@@ -50,7 +50,7 @@ class GeneratedRecoverySdkTest {
     }
     @Test void actualGeneratedClientDecodesUtcReceiptWithoutMutableTokenState() {
         var seen=new AtomicReference<ClientRequest>();
-        WebClient web=WebClient.builder().exchangeStrategies(UtcRecoveryCodecs.strategies()).filter(new ScopedRecoveryBearer(URI.create("https://core.example")))
+        WebClient web=WebClient.builder().exchangeStrategies(UtcRecoveryCodecs.strategies()).filter(new ScopedRecoveryBearerImpl(URI.create("https://core.example")))
             .exchangeFunction(request->{seen.set(request);return Mono.just(ClientResponse.create(HttpStatus.CREATED).header("Content-Type","application/json")
                 .body("{\"operationId\":\"d89c7273-40cd-4827-baf9-e22862799859\",\"expiresAt\":\"2026-10-31T20:01:00Z\"}").build());}).build();
         var client=new ApiClient(web);client.setBasePath("https://core.example");

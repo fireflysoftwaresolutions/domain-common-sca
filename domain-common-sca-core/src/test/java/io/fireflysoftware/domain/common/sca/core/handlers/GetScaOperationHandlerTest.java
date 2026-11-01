@@ -40,11 +40,11 @@ class GetScaOperationHandlerTest {
     @Mock
     private ScaOperationControllerApi scaOperationApi;
 
-    private GetScaOperationHandler handler;
+    private GetScaOperationHandlerImpl handler;
 
     @BeforeEach
     void setUp() {
-        handler = new GetScaOperationHandler(scaOperationApi);
+        handler = new GetScaOperationHandlerImpl(scaOperationApi);
     }
 
     @Test

@@ -38,7 +38,7 @@ public class NativeRecoveryHttpConfiguration {
     @Configuration(proxyBeanMethods=false)
     @ConditionalOnProperty(name={"firefly.sca.recovery.enabled","firefly.sca.recovery.native-http.enabled"},havingValue="true")
     static class Enabled {
-        @Bean NativeRecoveryHttpClient nativeRecoveryHttpClient(RecoveryTrust trust,
+        @Bean NativeRecoveryHttpClientImpl nativeRecoveryHttpClient(RecoveryTrust trust,
             @Value("${firefly.sca.recovery.native-http.base-uri}") String baseUri,
             @Value("${firefly.sca.recovery.native-http.workload-username}") String username,
             @Value("${firefly.sca.recovery.native-http.workload-password-file}") String passwordFile,
@@ -51,10 +51,10 @@ public class NativeRecoveryHttpConfiguration {
             WebClient web=WebClient.builder().clientConnector(new ReactorClientHttpConnector(HttpClient.create().followRedirect(false)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS,seconds*1000).responseTimeout(Duration.ofSeconds(seconds))))
                 .codecs(codecs->codecs.defaultCodecs().maxInMemorySize(65536)).build();
-            return new NativeRecoveryHttpClient(web,URI.create(baseUri),username,password,Duration.ofSeconds(seconds));
+            return new NativeRecoveryHttpClientImpl(web,URI.create(baseUri),username,password,Duration.ofSeconds(seconds));
         }
-        @Bean NativeRecoveryPort nativeRecoveryHttpPort(NativeRecoveryHttpClient http,RecoveryTrust trust){return new NativeRecoveryHttpPort(http,trust);}
-        @Bean RecoveryAuditPort nativeRecoveryAuditPort(NativeRecoveryHttpClient http){return new RecoveryAuditHttpPort(http);}
+        @Bean NativeRecoveryPort nativeRecoveryHttpPort(NativeRecoveryHttpClientImpl http,RecoveryTrust trust){return new NativeRecoveryHttpPortImpl(http,trust);}
+        @Bean RecoveryAuditPort nativeRecoveryAuditPort(NativeRecoveryHttpClientImpl http){return new RecoveryAuditHttpPortImpl(http);}
     }
     static String readSecret(String file){
         try{Path path=Path.of(file);if(!path.isAbsolute() || Files.isSymbolicLink(path) || !Files.isRegularFile(path,LinkOption.NOFOLLOW_LINKS)

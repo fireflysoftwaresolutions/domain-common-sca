@@ -46,11 +46,11 @@ class GetScaAttemptsHandlerTest {
     @Mock
     private ScaAttemptControllerApi scaAttemptApi;
 
-    private GetScaAttemptsHandler handler;
+    private GetScaAttemptsHandlerImpl handler;
 
     @BeforeEach
     void setUp() {
-        handler = new GetScaAttemptsHandler(scaChallengeApi, scaAttemptApi);
+        handler = new GetScaAttemptsHandlerImpl(scaChallengeApi, scaAttemptApi);
     }
 
     @Test

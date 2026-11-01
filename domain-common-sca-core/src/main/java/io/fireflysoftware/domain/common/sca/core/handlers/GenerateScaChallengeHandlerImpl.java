@@ -31,11 +31,11 @@ import reactor.core.publisher.Mono;
  */
 @Slf4j
 @CommandHandlerComponent(timeout = 15000, metrics = true, tracing = true)
-public class GenerateScaChallengeHandler extends CommandHandler<GenerateScaChallengeCommand, SCAChallengeDTO> {
+public class GenerateScaChallengeHandlerImpl extends CommandHandler<GenerateScaChallengeCommand, SCAChallengeDTO> {
 
     private final ScaChallengeControllerApi scaChallengeApi;
 
-    public GenerateScaChallengeHandler(ScaChallengeControllerApi scaChallengeApi) {
+    public GenerateScaChallengeHandlerImpl(ScaChallengeControllerApi scaChallengeApi) {
         this.scaChallengeApi = scaChallengeApi;
     }
 

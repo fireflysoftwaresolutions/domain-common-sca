@@ -31,11 +31,11 @@ import java.util.UUID;
  */
 @Slf4j
 @QueryHandlerComponent(cacheable = true, cacheTtl = 60, metrics = true)
-public class GetScaStatusHistoryHandler extends QueryHandler<GetScaStatusHistoryQuery, PaginationResponseSCAOperationHistoryDTO> {
+public class GetScaStatusHistoryHandlerImpl extends QueryHandler<GetScaStatusHistoryQuery, PaginationResponseSCAOperationHistoryDTO> {
 
     private final ScaOperationHistoryControllerApi scaHistoryApi;
 
-    public GetScaStatusHistoryHandler(ScaOperationHistoryControllerApi scaHistoryApi) {
+    public GetScaStatusHistoryHandlerImpl(ScaOperationHistoryControllerApi scaHistoryApi) {
         this.scaHistoryApi = scaHistoryApi;
     }
 

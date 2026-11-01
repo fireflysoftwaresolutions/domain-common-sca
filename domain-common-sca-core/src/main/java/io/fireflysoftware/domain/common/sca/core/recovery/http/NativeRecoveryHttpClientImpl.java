@@ -29,7 +29,7 @@ import java.time.*;
 import java.util.UUID;
 
 /** Product protocol transport. Native credentials are never requested or transported here. */
-public final class NativeRecoveryHttpClient {
+public final class NativeRecoveryHttpClientImpl {
     public record Rpc(String actorAssertion,RecoveryBinding binding,UUID operationId,UUID challengeId,UUID reservationId,
         String providerChallengeId,String category,String attestation,UUID executionId,String outcome,String action){
         @Override public String toString(){return "NativeRpc[redacted]";}
@@ -46,7 +46,7 @@ public final class NativeRecoveryHttpClient {
     private final String username;
     private final String password;
     private final Duration timeout;
-    public NativeRecoveryHttpClient(WebClient web,URI base,String username,String password,Duration timeout){
+    public NativeRecoveryHttpClientImpl(WebClient web,URI base,String username,String password,Duration timeout){
         if(web==null || base==null || !"https".equals(base.getScheme()) || base.getHost()==null || base.getUserInfo()!=null
             || base.getRawQuery()!=null || base.getFragment()!=null || username==null || username.isBlank() || username.contains(":")
             || password==null || password.isBlank() || timeout==null || timeout.isZero() || timeout.isNegative() || timeout.compareTo(Duration.ofSeconds(10))>0)
@@ -67,5 +67,5 @@ public final class NativeRecoveryHttpClient {
             .bodyToMono(result).timeout(timeout).switchIfEmpty(Mono.error(RecoveryFailure.unavailable()))
             .onErrorMap(error->RecoveryFailure.unavailable());
     }
-    @Override public String toString(){return "NativeRecoveryHttpClient[redacted]";}
+    @Override public String toString(){return "NativeRecoveryHttpClientImpl[redacted]";}
 }

@@ -37,7 +37,7 @@ public class RecoverySdkConfiguration {
         WebClient web=WebClient.builder().clientConnector(new ReactorClientHttpConnector(HttpClient.create()
             .followRedirect(false).responseTimeout(Duration.ofSeconds(10))))
             .exchangeStrategies(UtcRecoveryCodecs.strategies())
-            .filter(new ScopedRecoveryBearer(origin)).build();
+            .filter(new ScopedRecoveryBearerImpl(origin)).build();
         ApiClient client=new ApiClient(web);
         client.setBasePath(coreOrigin.endsWith("/")?coreOrigin.substring(0,coreOrigin.length()-1):coreOrigin);
         return new ScaRecoveryApi(client);
