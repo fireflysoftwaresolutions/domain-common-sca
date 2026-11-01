@@ -22,12 +22,12 @@ import java.util.UUID;
  * Asks core-common-sca-mgmt to create and validate the challenge, then hands the core's code
  * to {@link ChallengeDeliveryPort}. This service does not store challenges.
  */
-public final class ScaChallengeService {
+public final class ScaChallengeServiceImpl {
 
     private final CoreScaClient core;
     private final ChallengeDeliveryPort delivery;
 
-    public ScaChallengeService(CoreScaClient core, ChallengeDeliveryPort delivery) {
+    public ScaChallengeServiceImpl(CoreScaClient core, ChallengeDeliveryPort delivery) {
         this.core = core;
         this.delivery = delivery;
     }

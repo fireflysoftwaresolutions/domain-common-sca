@@ -31,11 +31,11 @@ import java.util.UUID;
  */
 @Slf4j
 @QueryHandlerComponent(cacheable = true, cacheTtl = 30, metrics = true)
-public class GetScaOperationHandler extends QueryHandler<GetScaOperationQuery, SCAOperationDTO> {
+public class GetScaOperationHandlerImpl extends QueryHandler<GetScaOperationQuery, SCAOperationDTO> {
 
     private final ScaOperationControllerApi scaOperationApi;
 
-    public GetScaOperationHandler(ScaOperationControllerApi scaOperationApi) {
+    public GetScaOperationHandlerImpl(ScaOperationControllerApi scaOperationApi) {
         this.scaOperationApi = scaOperationApi;
     }
 

@@ -13,6 +13,8 @@ spring:
 
 
 firefly:
+  security.resource-server.enabled: false
+  sca.recovery.enabled: ${SCA_RECOVERY_ENABLED:false}
   cqrs:
     enabled: true
     command:
@@ -44,6 +46,11 @@ api-configuration:
     base-path: ${ENDPOINT_CORE_SCA_MGMT:http://localhost:8040}
 
 server:
+  error:
+    include-message: never
+    include-binding-errors: never
+    include-stacktrace: never
+    include-exception: false
   address: ${SERVER_ADDRESS:localhost}
   port: ${SERVER_PORT:8041}
   shutdown: graceful
@@ -68,7 +75,8 @@ management:
         include: health,info,prometheus
   endpoint:
     health:
-      show-details: when-authorized
+      show-details: never
+      show-components: never
       probes:
         enabled: true
   health:
@@ -90,7 +98,7 @@ spring:
 logging:
   level:
     root: INFO
-    io.fireflysoftware: DEBUG
+    io.fireflysoftware: INFO
 
 ---
 spring:
@@ -101,7 +109,7 @@ spring:
 logging:
   level:
     root: INFO
-    io.fireflysoftware: DEBUG
+    io.fireflysoftware: INFO
 
 springdoc:
   api-docs:
@@ -126,3 +134,44 @@ springdoc:
     enabled: false
   swagger-ui:
     enabled: false
+
+---
+spring:
+  config:
+    activate:
+      on-profile: sca-recovery-receiver
+firefly:
+  security:
+    resource-server:
+      enabled: ${SCA_RECOVERY_ENABLED:false}
+      issuer: ${SCA_RECOVERY_TRUSTED_ISSUER}
+      jwk-set-uri: ${SCA_RECOVERY_TRUSTED_JWKS_URI}
+      audiences: ${SCA_RECOVERY_AUDIENCES}
+      tenant-required: true
+      tenant-claim-paths: [tenant_id]
+      scope-claim-paths: [scope]
+      strict-policy: true
+      signature-algorithms: [RS256]
+  sca:
+    recovery:
+      issuer: ${SCA_RECOVERY_TRUSTED_ISSUER}
+      realm: ${SCA_RECOVERY_REALM}
+      population: ${SCA_RECOVERY_POPULATION}
+      audiences: ${SCA_RECOVERY_AUDIENCES}
+      allowed-clients: ${SCA_RECOVERY_ALLOWED_CLIENTS}
+      max-lifetime-seconds: ${SCA_RECOVERY_MAX_LIFETIME_SECONDS}
+      core-origin: ${SCA_RECOVERY_CORE_ORIGIN}
+      native-self-service-policy.enabled: ${SCA_RECOVERY_NATIVE_SELF_SERVICE_POLICY_ENABLED:false}
+      native-http:
+        enabled: ${SCA_RECOVERY_NATIVE_HTTP_ENABLED:false}
+        base-uri: ${SCA_RECOVERY_NATIVE_RPC_URI}
+        workload-username: ${SCA_RECOVERY_NATIVE_WORKLOAD_USERNAME}
+        workload-password-file: ${SCA_RECOVERY_NATIVE_WORKLOAD_PASSWORD_FILE}
+        timeout-seconds: ${SCA_RECOVERY_NATIVE_TIMEOUT_SECONDS}
+        provider-profile: ${SCA_RECOVERY_NATIVE_PROVIDER_PROFILE}
+server:
+  error:
+    include-message: never
+    include-binding-errors: never
+    include-stacktrace: never
+    include-exception: false

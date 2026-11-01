@@ -42,7 +42,7 @@ import java.util.UUID;
 @Slf4j
 @Component
 @Saga(name = "verify-sca")
-public class VerifyScaSaga {
+public class VerifyScaSagaImpl {
 
     /** Name of this saga as registered with the SagaEngine. */
     public static final String SAGA_NAME = "verify-sca";
@@ -65,7 +65,7 @@ public class VerifyScaSaga {
     private final ScaOperationControllerApi scaOperationApi;
     private final ScaAuditControllerApi scaAuditApi;
 
-    public VerifyScaSaga(ScaAttemptControllerApi scaAttemptApi,
+    public VerifyScaSagaImpl(ScaAttemptControllerApi scaAttemptApi,
                          ScaChallengeControllerApi scaChallengeApi,
                          ScaOperationControllerApi scaOperationApi,
                          ScaAuditControllerApi scaAuditApi) {

@@ -28,6 +28,8 @@ Developed by the Firefly Software Foundation. [dev@fireflysoftware.io](mailto:de
 
 ## Overview
 
+The additive native account-recovery candidate is default-off and self-only. Its original-producer SDK and Domain source are [hosted-qualified](docs/SOURCE_QUALIFICATION.md); installed native unlocking and production acceptance remain separate gates. See [the exact recovery contract and configuration](docs/RECOVERY_SOURCE_CONTRACT.md).
+
 `domain-common-sca` is a reactive Spring Boot microservice that sits at the **domain layer** of the Firefly platform. Its responsibility is to provide a clean, business-oriented API for Strong Customer Authentication flows, shielding consumers from the lower-level complexity of the core SCA management system (`core-common-sca-mgmt`).
 
 The service handles the full SCA lifecycle: a caller initiates an operation (triggering automatic challenge generation and delivery), the user submits a verification code, and the service records the attempt, updates the operation status, and writes an immutable audit event — all as a single compensatable saga. It also exposes read-only endpoints to inspect operation state, individual attempts, and the complete status-change history.
@@ -47,15 +49,15 @@ ScaController  (domain-common-sca-web)
     ▼
 ScaServiceImpl  ──── CommandBus ────► CommandHandler
 (domain-common-sca-core)               │
-    │                                  ├─ InitiateScaOperationHandler ──► SagaEngine ──► InitiateScaSaga
-    │                                  ├─ VerifyScaAttemptHandler      ──► SagaEngine ──► VerifyScaSaga
-    │                                  └─ GenerateScaChallengeHandler  ──► ScaChallengeControllerApi
+    │                                  ├─ InitiateScaOperationHandlerImpl ──► SagaEngine ──► InitiateScaSagaImpl
+    │                                  ├─ VerifyScaAttemptHandlerImpl      ──► SagaEngine ──► VerifyScaSagaImpl
+    │                                  └─ GenerateScaChallengeHandlerImpl  ──► ScaChallengeControllerApi
     │
     └──────────── QueryBus ─────────► QueryHandler
-                                       ├─ GetScaOperationHandler       ──► ScaOperationControllerApi
-                                       ├─ GetScaAttemptsHandler        ──► ScaChallengeControllerApi
+                                       ├─ GetScaOperationHandlerImpl       ──► ScaOperationControllerApi
+                                       ├─ GetScaAttemptsHandlerImpl        ──► ScaChallengeControllerApi
                                        │                                    + ScaAttemptControllerApi
-                                       └─ GetScaStatusHistoryHandler   ──► ScaOperationHistoryControllerApi
+                                       └─ GetScaStatusHistoryHandlerImpl   ──► ScaOperationHistoryControllerApi
 
 All API clients are created by ScaMgmtClientFactory (domain-common-sca-infra)
 and connect to core-common-sca-mgmt (default: http://localhost:8040).
@@ -114,25 +116,25 @@ All endpoints are under the base path `/api/v1/sca/operations` and produce/consu
 ### Commands
 
 #### `InitiateScaOperationCommand`
-Carries `operationType` (String), `resourceId` (UUID), and `channel` (String). Handled by `InitiateScaOperationHandler`, which dispatches the `initiate-sca` saga with a 30-second timeout.
+Carries `operationType` (String), `resourceId` (UUID), and `channel` (String). Handled by `InitiateScaOperationHandlerImpl`, which dispatches the `initiate-sca` saga with a 30-second timeout.
 
 #### `GenerateScaChallengeCommand`
-Carries `operationId` (UUID) and `challengeType` (`ChallengeType` enum). Handled directly by `GenerateScaChallengeHandler` without a saga — calls `ScaChallengeControllerApi.createChallenge` with a 15-second timeout.
+Carries `operationId` (UUID) and `challengeType` (`ChallengeType` enum). Handled directly by `GenerateScaChallengeHandlerImpl` without a saga — calls `ScaChallengeControllerApi.createChallenge` with a 15-second timeout.
 
 #### `VerifyScaAttemptCommand`
-Carries `operationId` (UUID), `challengeId` (UUID), and `verificationCode` (String). Handled by `VerifyScaAttemptHandler`, which dispatches the `verify-sca` saga with a 30-second timeout.
+Carries `operationId` (UUID), `challengeId` (UUID), and `verificationCode` (String). Handled by `VerifyScaAttemptHandlerImpl`, which dispatches the `verify-sca` saga with a 30-second timeout.
 
 ### Queries
 
 | Query | Handler | Caching | Description |
 |-------|---------|---------|-------------|
-| `GetScaOperationQuery` | `GetScaOperationHandler` | Cacheable, TTL 30 s | Fetches a single operation from `ScaOperationControllerApi` |
-| `GetScaAttemptsQuery` | `GetScaAttemptsHandler` | Not cached | Resolves the most recent challenge for the operation then fetches attempts |
-| `GetScaStatusHistoryQuery` | `GetScaStatusHistoryHandler` | Cacheable, TTL 60 s | Fetches the status-change history from `ScaOperationHistoryControllerApi` |
+| `GetScaOperationQuery` | `GetScaOperationHandlerImpl` | Cacheable, TTL 30 s | Fetches a single operation from `ScaOperationControllerApi` |
+| `GetScaAttemptsQuery` | `GetScaAttemptsHandlerImpl` | Not cached | Resolves the most recent challenge for the operation then fetches attempts |
+| `GetScaStatusHistoryQuery` | `GetScaStatusHistoryHandlerImpl` | Cacheable, TTL 60 s | Fetches the status-change history from `ScaOperationHistoryControllerApi` |
 
 ### Saga: `initiate-sca`
 
-Orchestrated by `InitiateScaSaga`. Executed when a new SCA operation is requested.
+Orchestrated by `InitiateScaSagaImpl`. Executed when a new SCA operation is requested.
 
 | Step ID | Action | Retry | Compensation |
 |---------|--------|-------|--------------|
@@ -144,7 +146,7 @@ If `generateChallenge` or `sendChallenge` fails, `compensateCreateOperation` is 
 
 ### Saga: `verify-sca`
 
-Orchestrated by `VerifyScaSaga`. Executed when a user submits a verification code.
+Orchestrated by `VerifyScaSagaImpl`. Executed when a user submits a verification code.
 
 | Step ID | Action | Retry | Compensation |
 |---------|--------|-------|--------------|

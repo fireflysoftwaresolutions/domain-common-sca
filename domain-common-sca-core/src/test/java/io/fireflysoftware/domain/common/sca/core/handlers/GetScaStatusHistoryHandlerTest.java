@@ -31,6 +31,7 @@ import reactor.test.StepVerifier;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -39,11 +40,11 @@ class GetScaStatusHistoryHandlerTest {
     @Mock
     private ScaOperationHistoryControllerApi scaHistoryApi;
 
-    private GetScaStatusHistoryHandler handler;
+    private GetScaStatusHistoryHandlerImpl handler;
 
     @BeforeEach
     void setUp() {
-        handler = new GetScaStatusHistoryHandler(scaHistoryApi);
+        handler = new GetScaStatusHistoryHandlerImpl(scaHistoryApi);
     }
 
     @Test
@@ -54,7 +55,7 @@ class GetScaStatusHistoryHandlerTest {
         PaginationResponseSCAOperationHistoryDTO historyPage = new PaginationResponseSCAOperationHistoryDTO()
                 .totalElements(2L);
 
-        when(scaHistoryApi.getAllHistory(operationId, 0, 20, "eventTime", "DESC", any()))
+        when(scaHistoryApi.getAllHistory(eq(operationId), eq(0), eq(20), eq("eventTime"), eq("DESC"), any()))
                 .thenReturn(Mono.just(historyPage));
 
         StepVerifier.create(handler.doHandle(query))
@@ -67,7 +68,7 @@ class GetScaStatusHistoryHandlerTest {
         UUID operationId = UUID.randomUUID();
         GetScaStatusHistoryQuery query = new GetScaStatusHistoryQuery(operationId);
 
-        when(scaHistoryApi.getAllHistory(operationId, 0, 20, "eventTime", "DESC", any()))
+        when(scaHistoryApi.getAllHistory(eq(operationId), eq(0), eq(20), eq("eventTime"), eq("DESC"), any()))
                 .thenReturn(Mono.error(new RuntimeException("history unavailable")));
 
         StepVerifier.create(handler.doHandle(query))

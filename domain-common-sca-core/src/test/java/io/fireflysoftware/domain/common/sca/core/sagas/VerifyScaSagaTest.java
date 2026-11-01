@@ -27,7 +27,7 @@ import io.fireflysoftware.common.sca.sdk.model.SCAAttemptDTO;
 import io.fireflysoftware.common.sca.sdk.model.SCAOperationDTO;
 import io.fireflysoftware.domain.common.sca.core.TestScaCoreApplication;
 import io.fireflysoftware.domain.common.sca.core.commands.VerifyScaAttemptCommand;
-import io.fireflysoftware.domain.common.sca.core.sagas.VerifyScaSaga;
+import io.fireflysoftware.domain.common.sca.core.sagas.VerifyScaSagaImpl;
 import org.fireflyframework.orchestration.saga.engine.StepInputs;
 import org.fireflyframework.orchestration.saga.engine.SagaEngine;
 import org.junit.jupiter.api.Test;
@@ -43,7 +43,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-@SpringBootTest(classes = TestScaCoreApplication.class, webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@SpringBootTest(classes = TestScaCoreApplication.class, webEnvironment = SpringBootTest.WebEnvironment.NONE,
+        properties = "firefly.cache.default-cache-type=CAFFEINE")
 class VerifyScaSagaTest {
 
     @Autowired
@@ -92,12 +93,12 @@ class VerifyScaSagaTest {
                 .thenReturn(Mono.just(audit));
 
         VerifyScaAttemptCommand command = new VerifyScaAttemptCommand(operationId, challengeId, "123456");
-        StepInputs inputs = StepInputs.of(VerifyScaSaga.STEP_VALIDATE_ATTEMPT, command);
+        StepInputs inputs = StepInputs.of(VerifyScaSagaImpl.STEP_VALIDATE_ATTEMPT, command);
 
-        StepVerifier.create(sagaEngine.execute(VerifyScaSaga.SAGA_NAME, inputs))
+        StepVerifier.create(sagaEngine.execute(VerifyScaSagaImpl.SAGA_NAME, inputs))
                 .assertNext(result -> {
                     assertThat(result.isSuccess()).isTrue();
-                    assertThat(result.steps()).containsKeys(VerifyScaSaga.STEP_VALIDATE_ATTEMPT, VerifyScaSaga.STEP_UPDATE_STATUS, VerifyScaSaga.STEP_RECORD_AUDIT);
+                    assertThat(result.steps()).containsKeys(VerifyScaSagaImpl.STEP_VALIDATE_ATTEMPT, VerifyScaSagaImpl.STEP_UPDATE_STATUS, VerifyScaSagaImpl.STEP_RECORD_AUDIT);
                 })
                 .verifyComplete();
     }
@@ -126,12 +127,12 @@ class VerifyScaSagaTest {
                 .thenReturn(Mono.just(new SCAAttemptDTO().success(false)));
 
         VerifyScaAttemptCommand command = new VerifyScaAttemptCommand(operationId, challengeId, "000000");
-        StepInputs inputs = StepInputs.of(VerifyScaSaga.STEP_VALIDATE_ATTEMPT, command);
+        StepInputs inputs = StepInputs.of(VerifyScaSagaImpl.STEP_VALIDATE_ATTEMPT, command);
 
-        StepVerifier.create(sagaEngine.execute(VerifyScaSaga.SAGA_NAME, inputs))
+        StepVerifier.create(sagaEngine.execute(VerifyScaSagaImpl.SAGA_NAME, inputs))
                 .assertNext(result -> {
                     assertThat(result.isFailed()).isTrue();
-                    assertThat(result.compensatedSteps()).contains(VerifyScaSaga.STEP_VALIDATE_ATTEMPT);
+                    assertThat(result.compensatedSteps()).contains(VerifyScaSagaImpl.STEP_VALIDATE_ATTEMPT);
                 })
                 .verifyComplete();
     }

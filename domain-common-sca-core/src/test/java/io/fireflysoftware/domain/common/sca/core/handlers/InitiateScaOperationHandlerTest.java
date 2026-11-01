@@ -18,7 +18,7 @@
 package io.fireflysoftware.domain.common.sca.core.handlers;
 
 import io.fireflysoftware.domain.common.sca.core.commands.InitiateScaOperationCommand;
-import io.fireflysoftware.domain.common.sca.core.sagas.InitiateScaSaga;
+import io.fireflysoftware.domain.common.sca.core.sagas.InitiateScaSagaImpl;
 import org.fireflyframework.orchestration.saga.engine.SagaResult;
 import org.fireflyframework.orchestration.saga.engine.StepInputs;
 import org.fireflyframework.orchestration.saga.engine.SagaEngine;
@@ -44,11 +44,11 @@ class InitiateScaOperationHandlerTest {
     @Mock
     private SagaEngine sagaEngine;
 
-    private InitiateScaOperationHandler handler;
+    private InitiateScaOperationHandlerImpl handler;
 
     @BeforeEach
     void setUp() {
-        handler = new InitiateScaOperationHandler(sagaEngine);
+        handler = new InitiateScaOperationHandlerImpl(sagaEngine);
     }
 
     @Test
@@ -57,7 +57,7 @@ class InitiateScaOperationHandlerTest {
         InitiateScaOperationCommand command = new InitiateScaOperationCommand("LOGIN", resourceId, "MOBILE");
 
         SagaResult expectedResult = mock(SagaResult.class);
-        when(sagaEngine.execute(eq(InitiateScaSaga.SAGA_NAME), any(StepInputs.class)))
+        when(sagaEngine.execute(eq(InitiateScaSagaImpl.SAGA_NAME), any(StepInputs.class)))
                 .thenReturn(Mono.just(expectedResult));
 
         StepVerifier.create(handler.doHandle(command))
@@ -65,7 +65,7 @@ class InitiateScaOperationHandlerTest {
                 .verifyComplete();
 
         ArgumentCaptor<StepInputs> captor = ArgumentCaptor.forClass(StepInputs.class);
-        verify(sagaEngine).execute(eq(InitiateScaSaga.SAGA_NAME), captor.capture());
+        verify(sagaEngine).execute(eq(InitiateScaSagaImpl.SAGA_NAME), captor.capture());
         assertThat(captor.getValue()).isNotNull();
     }
 
@@ -74,7 +74,7 @@ class InitiateScaOperationHandlerTest {
         UUID resourceId = UUID.randomUUID();
         InitiateScaOperationCommand command = new InitiateScaOperationCommand("TRANSFER", resourceId, "WEB");
 
-        when(sagaEngine.execute(eq(InitiateScaSaga.SAGA_NAME), any(StepInputs.class)))
+        when(sagaEngine.execute(eq(InitiateScaSagaImpl.SAGA_NAME), any(StepInputs.class)))
                 .thenReturn(Mono.error(new RuntimeException("saga failure")));
 
         StepVerifier.create(handler.doHandle(command))

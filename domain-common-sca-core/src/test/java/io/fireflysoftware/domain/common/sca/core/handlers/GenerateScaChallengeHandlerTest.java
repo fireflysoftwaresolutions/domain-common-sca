@@ -41,11 +41,11 @@ class GenerateScaChallengeHandlerTest {
     @Mock
     private ScaChallengeControllerApi scaChallengeApi;
 
-    private GenerateScaChallengeHandler handler;
+    private GenerateScaChallengeHandlerImpl handler;
 
     @BeforeEach
     void setUp() {
-        handler = new GenerateScaChallengeHandler(scaChallengeApi);
+        handler = new GenerateScaChallengeHandlerImpl(scaChallengeApi);
     }
 
     @Test

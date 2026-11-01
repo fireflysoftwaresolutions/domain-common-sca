@@ -26,7 +26,7 @@ import io.fireflysoftware.common.sca.sdk.model.SCAChallengeDTO;
 import io.fireflysoftware.common.sca.sdk.model.SCAOperationDTO;
 import io.fireflysoftware.domain.common.sca.core.TestScaCoreApplication;
 import io.fireflysoftware.domain.common.sca.core.commands.InitiateScaOperationCommand;
-import io.fireflysoftware.domain.common.sca.core.sagas.InitiateScaSaga;
+import io.fireflysoftware.domain.common.sca.core.sagas.InitiateScaSagaImpl;
 import org.fireflyframework.orchestration.saga.engine.SagaResult;
 import org.fireflyframework.orchestration.saga.engine.StepInputs;
 import org.fireflyframework.orchestration.saga.engine.SagaEngine;
@@ -43,7 +43,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-@SpringBootTest(classes = TestScaCoreApplication.class, webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@SpringBootTest(classes = TestScaCoreApplication.class, webEnvironment = SpringBootTest.WebEnvironment.NONE,
+        properties = "firefly.cache.default-cache-type=CAFFEINE")
 class InitiateScaSagaTest {
 
     @Autowired
@@ -84,12 +85,12 @@ class InitiateScaSagaTest {
                 .thenReturn(Mono.empty());
 
         InitiateScaOperationCommand command = new InitiateScaOperationCommand("LOGIN", UUID.randomUUID(), "MOBILE");
-        StepInputs inputs = StepInputs.of(InitiateScaSaga.STEP_CREATE_OPERATION, command);
+        StepInputs inputs = StepInputs.of(InitiateScaSagaImpl.STEP_CREATE_OPERATION, command);
 
-        StepVerifier.create(sagaEngine.execute(InitiateScaSaga.SAGA_NAME, inputs))
+        StepVerifier.create(sagaEngine.execute(InitiateScaSagaImpl.SAGA_NAME, inputs))
                 .assertNext(result -> {
                     assertThat(result.isSuccess()).isTrue();
-                    assertThat(result.steps()).containsKeys(InitiateScaSaga.STEP_CREATE_OPERATION, InitiateScaSaga.STEP_GENERATE_CHALLENGE, InitiateScaSaga.STEP_SEND_CHALLENGE);
+                    assertThat(result.steps()).containsKeys(InitiateScaSagaImpl.STEP_CREATE_OPERATION, InitiateScaSagaImpl.STEP_GENERATE_CHALLENGE, InitiateScaSagaImpl.STEP_SEND_CHALLENGE);
                 })
                 .verifyComplete();
     }
@@ -109,12 +110,12 @@ class InitiateScaSagaTest {
                 .thenReturn(Mono.just(new SCAOperationDTO().status(SCAOperationDTO.StatusEnum.CANCELLED)));
 
         InitiateScaOperationCommand command = new InitiateScaOperationCommand("TRANSFER", UUID.randomUUID(), "WEB");
-        StepInputs inputs = StepInputs.of(InitiateScaSaga.STEP_CREATE_OPERATION, command);
+        StepInputs inputs = StepInputs.of(InitiateScaSagaImpl.STEP_CREATE_OPERATION, command);
 
-        StepVerifier.create(sagaEngine.execute(InitiateScaSaga.SAGA_NAME, inputs))
+        StepVerifier.create(sagaEngine.execute(InitiateScaSagaImpl.SAGA_NAME, inputs))
                 .assertNext(result -> {
                     assertThat(result.isFailed()).isTrue();
-                    assertThat(result.compensatedSteps()).contains(InitiateScaSaga.STEP_CREATE_OPERATION);
+                    assertThat(result.compensatedSteps()).contains(InitiateScaSagaImpl.STEP_CREATE_OPERATION);
                 })
                 .verifyComplete();
     }
